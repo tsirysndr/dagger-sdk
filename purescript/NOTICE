@@ -1,0 +1,11 @@
+The original SDK implementation is licensed under the MIT License.
+
+schema/introspection.json is copied from the Dagger project:
+  https://github.com/dagger/dagger
+  cmd/codegen/introspection/testdata/schema.json
+  checkout commit: 366d6dd0f9ca9b6ebb9196049eb19c01e31dacf4
+
+The schema and API descriptions reproduced in the generated bindings originate
+from Dagger and retain their Apache License 2.0 terms. See schema/LICENSE.
+The bundled fixture contains test-module types; the default generator excludes
+Test, Sub1, Sub1Obj, Sub2, and Sub2Obj. Custom input schemas retain user types.
