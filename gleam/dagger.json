@@ -1,0 +1,9 @@
+{
+  "name": "gleam-sdk",
+  "engineVersion": "v0.21.8",
+  "sdk": {
+    "source": "python"
+  },
+  "source": "runtime",
+  "disableDefaultFunctionCaching": true
+}
