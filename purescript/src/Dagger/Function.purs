@@ -8,6 +8,7 @@ module Dagger.Function
   , returnType
   , sourceMap
   , sourceModuleName
+  , withAgent
   , withArg
   , withArgWith
   , WithArgOpts
@@ -24,6 +25,7 @@ module Dagger.Function
   , withDescription
   , withGenerator
   , withSourceMap
+  , withUp
   ) where
 
 import Data.Maybe (Maybe(..))
@@ -62,6 +64,10 @@ sourceMap = R.nullableObject "SourceMap" "sourceMap" []
 -- | If this function is provided by a module, the name of the module. Unset otherwise.
 sourceModuleName :: T.Function -> Aff String
 sourceModuleName = R.scalar "sourceModuleName" []
+
+-- | Returns the function with a flag indicating it is a source of expertise.
+withAgent :: T.Function -> T.Function
+withAgent = R.select "withAgent" []
 
 type WithArgOpts =
   { description :: Maybe String
@@ -141,3 +147,7 @@ withGenerator = R.select "withGenerator" []
 -- | Returns the function with the given source map.
 withSourceMap :: T.SourceMap -> T.Function -> T.Function
 withSourceMap argSourceMap = R.select "withSourceMap" [R.objectArgument "sourceMap" "ID!" argSourceMap]
+
+-- | Returns the function with a flag indicating it returns a service for dagger up.
+withUp :: T.Function -> T.Function
+withUp = R.select "withUp" []

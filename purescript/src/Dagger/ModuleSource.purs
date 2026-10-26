@@ -3,6 +3,7 @@ module Dagger.ModuleSource
   ( asModule
   , asString
   , blueprint
+  , clientSchemaIntrospectionJSON
   , cloneRef
   , commit
   , configClients
@@ -12,6 +13,7 @@ module Dagger.ModuleSource
   , digest
   , directory
   , engineVersion
+  , generate
   , generatedContextChangeset
   , generatedContextDirectory
   , htmlRepoURL
@@ -30,6 +32,7 @@ module Dagger.ModuleSource
   , sourceSubpath
   , sync
   , toolchains
+  , updatedConfigDirectory
   , userDefaults
   , version
   , withBlueprint
@@ -67,8 +70,15 @@ asString :: T.ModuleSource -> Aff String
 asString = R.scalar "asString" []
 
 -- | The blueprint referenced by the module source.
+-- | Deprecated: Legacy dagger.json field. Generic module loading no longer honors it; use workspace modules in dagger.toml instead.
 blueprint :: T.ModuleSource -> T.ModuleSource
 blueprint = R.select "blueprint" []
+
+-- | The client-facing introspection schema JSON file for this module source.
+-- |
+-- | This is the schema consumed by client codegen: unlike introspectionSchemaJSON (the module-facing schema), it hides no core types and installs this module (reached via dag.<moduleName>) so a generated client can bind it. The module's dependencies are excluded: a client is generated for a single module plus core, not its dependency graph.
+clientSchemaIntrospectionJSON :: T.ModuleSource -> T.File
+clientSchemaIntrospectionJSON = R.select "clientSchemaIntrospectionJSON" []
 
 -- | The ref to clone the root of the git repo from. Only valid for git sources.
 cloneRef :: T.ModuleSource -> Aff String
@@ -82,7 +92,7 @@ commit = R.scalar "commit" []
 configClients :: T.ModuleSource -> Aff (Array T.ModuleConfigClient)
 configClients = R.objectList "ModuleConfigClient" "configClients" []
 
--- | Whether an existing dagger.json for the module was found.
+-- | Whether an existing module config file was found.
 configExists :: T.ModuleSource -> Aff Boolean
 configExists = R.scalar "configExists" []
 
@@ -106,6 +116,12 @@ directory argPath = R.select "directory" [R.argument "path" "String!" argPath]
 engineVersion :: T.ModuleSource -> Aff String
 engineVersion = R.scalar "engineVersion" []
 
+-- | Return the supplied workspace with this module's generated context applied.
+-- |
+-- | The workspace change baseline is preserved, so a later Workspace.changes call includes this generation together with any other edits made by the caller.
+generate :: T.Workspace -> T.ModuleSource -> T.Workspace
+generate argWorkspace = R.select "generate" [R.objectArgument "workspace" "ID!" argWorkspace]
+
 -- | The generated files and directories made on top of the module source's context directory, returned as a Changeset.
 generatedContextChangeset :: T.ModuleSource -> T.Changeset
 generatedContextChangeset = R.select "generatedContextChangeset" []
@@ -127,9 +143,9 @@ id :: T.ModuleSource -> Aff T.ID
 id = R.scalar "id" []
 
 -- | The introspection schema JSON file for this module source.
--- | 
+-- |
 -- | This file represents the schema visible to the module's source code, including all core types and those from the dependencies.
--- | 
+-- |
 -- | Note: this is in the context of a module, so some core types may be hidden.
 introspectionSchemaJSON :: T.ModuleSource -> T.File
 introspectionSchemaJSON = R.select "introspectionSchemaJSON" []
@@ -146,7 +162,7 @@ localContextDirectoryPath = R.scalar "localContextDirectoryPath" []
 moduleName :: T.ModuleSource -> Aff String
 moduleName = R.scalar "moduleName" []
 
--- | The original name of the module as read from the module's dagger.json (or set for the first time with the withName API).
+-- | The original name of the module as read from the module config file (or set for the first time with the withName API).
 moduleOriginalName :: T.ModuleSource -> Aff String
 moduleOriginalName = R.scalar "moduleOriginalName" []
 
@@ -166,7 +182,7 @@ repoRootPath = R.scalar "repoRootPath" []
 sdk :: T.ModuleSource -> Aff (Maybe T.SDKConfig)
 sdk = R.nullableObject "SDKConfig" "sdk" []
 
--- | The path, relative to the context directory, that contains the module's dagger.json.
+-- | The path, relative to the context directory, that contains the module config.
 sourceRootSubpath :: T.ModuleSource -> Aff String
 sourceRootSubpath = R.scalar "sourceRootSubpath" []
 
@@ -179,8 +195,15 @@ sync :: T.ModuleSource -> Aff T.ID
 sync = R.scalar "sync" []
 
 -- | The toolchains referenced by the module source.
+-- | Deprecated: Legacy dagger.json field. Generic module loading no longer honors it; use workspace modules in dagger.toml instead.
 toolchains :: T.ModuleSource -> Aff (Array T.ModuleSource)
 toolchains = R.objectList "ModuleSource" "toolchains" []
+
+-- | The module's dagger.json with any in-memory edits from with* APIs applied, as a diff relative to the source's context directory.
+-- |
+-- | Unlike generatedContextDirectory, this does not run codegen and does not validate the engine version against the running engine, so it can be used to declare an engine requirement newer than the running engine. Loading or serving such a module still fails at moduleSource.asModule.
+updatedConfigDirectory :: T.ModuleSource -> T.Directory
+updatedConfigDirectory = R.select "updatedConfigDirectory" []
 
 -- | User-defined defaults read from local .env files
 userDefaults :: T.ModuleSource -> T.EnvFile
@@ -191,6 +214,7 @@ version :: T.ModuleSource -> Aff String
 version = R.scalar "version" []
 
 -- | Set a blueprint for the module source.
+-- | Deprecated: Legacy dagger.json field. Generic module loading no longer honors it; use workspace modules in `dagger.toml` instead.
 withBlueprint :: T.ModuleSource -> T.ModuleSource -> T.ModuleSource
 withBlueprint argBlueprint = R.select "withBlueprint" [R.objectArgument "blueprint" "ID!" argBlueprint]
 
@@ -219,6 +243,7 @@ withName :: String -> T.ModuleSource -> T.ModuleSource
 withName argName = R.select "withName" [R.argument "name" "String!" argName]
 
 -- | Remove the current blueprint from the module source.
+-- | Deprecated: Legacy dagger.json field. Generic module loading no longer honors it; use workspace modules in `dagger.toml` instead.
 withoutBlueprint :: T.ModuleSource -> T.ModuleSource
 withoutBlueprint = R.select "withoutBlueprint" []
 
@@ -235,6 +260,7 @@ withoutExperimentalFeatures :: (Array T.ModuleSourceExperimentalFeature) -> T.Mo
 withoutExperimentalFeatures argFeatures = R.select "withoutExperimentalFeatures" [R.argument "features" "[ModuleSourceExperimentalFeature!]!" argFeatures]
 
 -- | Remove the provided toolchains from the module source.
+-- | Deprecated: Legacy dagger.json field. Generic module loading no longer honors it; use workspace modules in `dagger.toml` instead.
 withoutToolchains :: (Array String) -> T.ModuleSource -> T.ModuleSource
 withoutToolchains argToolchains = R.select "withoutToolchains" [R.argument "toolchains" "[String!]!" argToolchains]
 
@@ -247,10 +273,12 @@ withSourceSubpath :: String -> T.ModuleSource -> T.ModuleSource
 withSourceSubpath argPath = R.select "withSourceSubpath" [R.argument "path" "String!" argPath]
 
 -- | Add toolchains to the module source.
+-- | Deprecated: Legacy dagger.json field. Generic module loading no longer honors it; use workspace modules in `dagger.toml` instead.
 withToolchains :: (Array T.ModuleSource) -> T.ModuleSource -> T.ModuleSource
 withToolchains argToolchains = R.select "withToolchains" [R.objectsArgument "toolchains" "[ID!]!" argToolchains]
 
 -- | Update the blueprint module to the latest version.
+-- | Deprecated: Legacy dagger.json field. Generic module loading no longer honors it; use workspace modules in `dagger.toml` instead.
 withUpdateBlueprint :: T.ModuleSource -> T.ModuleSource
 withUpdateBlueprint = R.select "withUpdateBlueprint" []
 
@@ -263,5 +291,6 @@ withUpdateDependencies :: (Array String) -> T.ModuleSource -> T.ModuleSource
 withUpdateDependencies argDependencies = R.select "withUpdateDependencies" [R.argument "dependencies" "[String!]!" argDependencies]
 
 -- | Update one or more toolchains.
+-- | Deprecated: Legacy dagger.json field. Generic module loading no longer honors it; use workspace modules in `dagger.toml` instead.
 withUpdateToolchains :: (Array String) -> T.ModuleSource -> T.ModuleSource
 withUpdateToolchains argToolchains = R.select "withUpdateToolchains" [R.argument "toolchains" "[String!]!" argToolchains]

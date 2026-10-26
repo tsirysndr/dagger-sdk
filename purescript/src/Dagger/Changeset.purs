@@ -4,7 +4,12 @@ module Dagger.Changeset
   , after
   , asPatch
   , before
+  , diffStats
   , export
+  , filter
+  , filterWith
+  , FilterOpts
+  , defaultFilterOpts
   , id
   , isEmpty
   , layer
@@ -42,9 +47,36 @@ asPatch = R.select "asPatch" []
 before :: T.Changeset -> T.Directory
 before = R.select "before" []
 
+-- | Structured per-path diff statistics (kind and line counts) for this changeset.
+diffStats :: T.Changeset -> Aff (Array T.DiffStat)
+diffStats = R.objectList "DiffStat" "diffStats" []
+
 -- | Applies the diff represented by this changeset to a path on the host.
 export :: String -> T.Changeset -> Aff String
 export argPath = R.scalar "export" [R.argument "path" "String!" argPath]
+
+type FilterOpts =
+  { include :: Maybe (Array String)
+  , exclude :: Maybe (Array String)
+  }
+
+defaultFilterOpts :: FilterOpts
+defaultFilterOpts =
+  { include: Nothing
+  , exclude: Nothing
+  }
+
+-- | Select changes matching the supplied glob patterns, preserving their original baseline.
+-- |
+-- | Includes additions, modifications, and deletions. Selecting only one side of a rename yields an addition or deletion.
+filter :: T.Changeset -> T.Changeset
+filter = filterWith defaultFilterOpts
+
+-- | Select changes matching the supplied glob patterns, preserving their original baseline.
+-- |
+-- | Includes additions, modifications, and deletions. Selecting only one side of a rename yields an addition or deletion.
+filterWith :: FilterOpts -> T.Changeset -> T.Changeset
+filterWith opts = R.select "filter" [R.optional (R.argument "include" "[String!]") opts.include, R.optional (R.argument "exclude" "[String!]") opts.exclude]
 
 -- | A unique identifier for this Changeset.
 id :: T.Changeset -> Aff T.ID
@@ -80,13 +112,13 @@ defaultWithChangesetOpts =
   }
 
 -- | Add changes to an existing changeset
--- | 
+-- |
 -- | By default the operation will fail in case of conflicts, for instance a file modified in both changesets. The behavior can be adjusted using onConflict argument
 withChangeset :: T.Changeset -> T.Changeset -> T.Changeset
 withChangeset argChanges = withChangesetWith argChanges defaultWithChangesetOpts
 
 -- | Add changes to an existing changeset
--- | 
+-- |
 -- | By default the operation will fail in case of conflicts, for instance a file modified in both changesets. The behavior can be adjusted using onConflict argument
 withChangesetWith :: T.Changeset -> WithChangesetOpts -> T.Changeset -> T.Changeset
 withChangesetWith argChanges opts = R.select "withChangeset" [R.objectArgument "changes" "ID!" argChanges, R.optional (R.argument "onConflict" "ChangesetMergeConflict") opts.onConflict]
@@ -101,17 +133,17 @@ defaultWithChangesetsOpts =
   }
 
 -- | Add changes from multiple changesets using git octopus merge strategy
--- | 
+-- |
 -- | This is more efficient than chaining multiple withChangeset calls when merging many changesets.
--- | 
+-- |
 -- | Only FAIL and FAIL_EARLY conflict strategies are supported (octopus merge cannot use -X ours/theirs).
 withChangesets :: (Array T.Changeset) -> T.Changeset -> T.Changeset
 withChangesets argChanges = withChangesetsWith argChanges defaultWithChangesetsOpts
 
 -- | Add changes from multiple changesets using git octopus merge strategy
--- | 
+-- |
 -- | This is more efficient than chaining multiple withChangeset calls when merging many changesets.
--- | 
+-- |
 -- | Only FAIL and FAIL_EARLY conflict strategies are supported (octopus merge cannot use -X ours/theirs).
 withChangesetsWith :: (Array T.Changeset) -> WithChangesetsOpts -> T.Changeset -> T.Changeset
 withChangesetsWith argChanges opts = R.select "withChangesets" [R.objectsArgument "changes" "[ID!]!" argChanges, R.optional (R.argument "onConflict" "ChangesetsMergeConflict") opts.onConflict]

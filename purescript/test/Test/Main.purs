@@ -6,7 +6,12 @@ import Dagger.Container as Container
 import Dagger.Directory as Directory
 import Dagger.EnvVariable as EnvVariable
 import Dagger.Query as Query
-import Dagger.Types (ReturnType(..))
+import Dagger.Types (ReturnType(..), LLMContentBlockInput(..), LLMContentBlockKind(..))
+import Data.Argonaut.Core (stringify)
+import Data.Argonaut.Decode (decodeJson)
+import Data.Argonaut.Encode (encodeJson)
+import Data.Either (Either(..))
+import Data.String (Pattern(..), contains)
 import Data.Array (head)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
@@ -21,6 +26,21 @@ foreign import verifyMock :: Effect Unit
 
 main :: Effect Unit
 main = launchAff_ $ bracket (liftEffect installMock) liftEffect \_ -> do
+  let
+    leaf = LLMContentBlockInput
+      { kind: LLMContentBlockKindText, text: Just "nested", callId: Nothing
+      , toolName: Nothing, arguments: Nothing, errored: Nothing, signature: Nothing
+      , mimeType: Nothing, data: Nothing, file: Nothing, content: Nothing
+      }
+    nested = case leaf of
+      LLMContentBlockInput fields -> LLMContentBlockInput (fields { content = Just [ leaf ] })
+    encoded = encodeJson nested
+  unless (contains (Pattern "\"kind\":\"TEXT\"") (stringify encoded)) $
+    throwError (error "input JSON must preserve the GraphQL field name kind")
+  case decodeJson encoded :: Either _ LLMContentBlockInput of
+    Left _ -> throwError (error "recursive input decoding failed")
+    Right decoded -> unless (encodeJson decoded == encoded) $
+      throwError (error "recursive input round trip failed")
   client <- liftEffect $ Dagger.connectWith { port: 12345, token: "test-token", timeoutMs: 1000 }
   let
     base = Query.container client # Container.from "alpine:3.21"

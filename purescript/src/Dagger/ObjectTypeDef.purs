@@ -16,7 +16,7 @@ import Effect.Aff (Aff)
 import Dagger.Internal.Runtime as R
 import Dagger.Types as T
 
--- | The function used to construct new instances of this object, if any
+-- | The function used to construct new instances of this object, if any.
 constructor :: T.ObjectTypeDef -> Aff (Maybe T.Function)
 constructor = R.nullableObject "Function" "constructor" []
 

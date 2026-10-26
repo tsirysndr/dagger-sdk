@@ -2,11 +2,13 @@
 module Dagger.EngineCacheEntry
   ( activelyUsed
   , createdTimeUnixNano
+  , dagqlCall
   , description
   , diskSpaceBytes
   , id
   , mostRecentUseTimeUnixNano
   , recordType
+  , recordTypes
   ) where
 
 import Effect.Aff (Aff)
@@ -20,6 +22,10 @@ activelyUsed = R.scalar "activelyUsed" []
 -- | The time the cache entry was created, in Unix nanoseconds.
 createdTimeUnixNano :: T.EngineCacheEntry -> Aff Int
 createdTimeUnixNano = R.scalar "createdTimeUnixNano" []
+
+-- | The DagQL call that produced this cache entry.
+dagqlCall :: T.EngineCacheEntry -> Aff String
+dagqlCall = R.scalar "dagqlCall" []
 
 -- | The description of the cache entry.
 description :: T.EngineCacheEntry -> Aff String
@@ -40,3 +46,7 @@ mostRecentUseTimeUnixNano = R.scalar "mostRecentUseTimeUnixNano" []
 -- | The type of the cache record (e.g. regular, internal, frontend, source.local, source.git.checkout, exec.cachemount).
 recordType :: T.EngineCacheEntry -> Aff String
 recordType = R.scalar "recordType" []
+
+-- | The storage record types represented by this cache entry.
+recordTypes :: T.EngineCacheEntry -> Aff (Array String)
+recordTypes = R.scalar "recordTypes" []

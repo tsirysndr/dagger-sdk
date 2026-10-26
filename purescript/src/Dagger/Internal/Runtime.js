@@ -27,7 +27,7 @@ export const connectWith = config => () => {
 };
 export const connect = () => {
   const port = process.env.DAGGER_SESSION_PORT, token = process.env.DAGGER_SESSION_TOKEN;
-  if (!port || !token) throw new Error("No Dagger session. Run your program with `dagger run` (DAGGER_SESSION_PORT and DAGGER_SESSION_TOKEN are required).");
+  if (!port || !token) throw new Error("No Dagger session. Run your program with `dagger api with-session` (DAGGER_SESSION_PORT and DAGGER_SESSION_TOKEN are required).");
   if (!/^\d+$/.test(port)) throw new Error("Invalid DAGGER_SESSION_PORT");
   return connectWith({ port: Number(port), token, timeoutMs: 300000 })();
 };

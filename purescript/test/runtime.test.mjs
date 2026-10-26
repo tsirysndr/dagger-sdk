@@ -38,7 +38,7 @@ test("invalid query identifiers and session configuration fail early", () => {
   assert.throws(()=>connectWith({port:1234,token:"x",timeoutMs:0})(),/timeout/);
   const oldPort=process.env.DAGGER_SESSION_PORT, oldToken=process.env.DAGGER_SESSION_TOKEN;
   delete process.env.DAGGER_SESSION_PORT; delete process.env.DAGGER_SESSION_TOKEN;
-  try { assert.throws(connect,/dagger run/); } finally {
+  try { assert.throws(connect,/dagger api with-session/); } finally {
     if(oldPort!==undefined)process.env.DAGGER_SESSION_PORT=oldPort;
     if(oldToken!==undefined)process.env.DAGGER_SESSION_TOKEN=oldToken;
   }

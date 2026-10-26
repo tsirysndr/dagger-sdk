@@ -38,6 +38,7 @@ sourceMap = R.nullableObject "SourceMap" "sourceMap" []
 sourceModuleName :: T.EnumTypeDef -> Aff String
 sourceModuleName = R.scalar "sourceModuleName" []
 
+-- | The members of the enum.
 -- | Deprecated: use members instead
 values :: T.EnumTypeDef -> Aff (Array T.EnumValueTypeDef)
 values = R.objectList "EnumValueTypeDef" "values" []

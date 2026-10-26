@@ -12,22 +12,184 @@ import Dagger.Internal.Runtime (Object)
 import Dagger.Module.Value (class IsObject)
 import Dagger.Module.Value as V
 
+-- | How acronyms and terms are written where a word starts with a capital.
+data AcronymStyle = AcronymStyleUppercase | AcronymStyleCapitalized
+derive instance eqAcronymStyle :: Eq AcronymStyle
+derive instance ordAcronymStyle :: Ord AcronymStyle
+instance showAcronymStyle :: Show AcronymStyle where
+  show = case _ of
+    AcronymStyleUppercase -> "UPPERCASE"
+    AcronymStyleCapitalized -> "CAPITALIZED"
+instance encodeAcronymStyle :: EncodeJson AcronymStyle where
+  encodeJson = encodeJson <<< show
+instance decodeAcronymStyle :: DecodeJson AcronymStyle where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "UPPERCASE" -> Right AcronymStyleUppercase
+      "CAPITALIZED" -> Right AcronymStyleCapitalized
+      _ -> Left (TypeMismatch "AcronymStyle")
+
+instance moduleValueAcronymStyle :: V.DaggerValue AcronymStyle where
+  valueType _ = V.EnumType "AcronymStyle"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
+
 -- | A standardized address to load containers, directories, secrets, and other object types. Address format depends on the type, and is validated at type selection.
 foreign import data AddressTag :: Type
 type Address = Object AddressTag
 instance objectTypeAddress :: IsObject AddressTag where
   objectTypeName _ = "Address"
 
-foreign import data BindingTag :: Type
-type Binding = Object BindingTag
-instance objectTypeBinding :: IsObject BindingTag where
-  objectTypeName _ = "Binding"
+-- | EXPERIMENTAL: Agent APIs are likely to change.
+-- |
+-- | A conversation loop running as an addressable, long-lived entity within the session. The conversation itself remains observable at any time as an immutable LLM value.
+foreign import data AgentTag :: Type
+type Agent = Object AgentTag
+instance objectTypeAgent :: IsObject AgentTag where
+  objectTypeName _ = "Agent"
+
+-- | EXPERIMENTAL: Agent APIs are likely to change.
+-- |
+-- | A message delivered to an agent's mailbox.
+foreign import data AgentMessageTag :: Type
+type AgentMessage = Object AgentMessageTag
+instance objectTypeAgentMessage :: IsObject AgentMessageTag where
+  objectTypeName _ = "AgentMessage"
+
+-- | EXPERIMENTAL: Agent APIs are likely to change.
+-- |
+-- | How a message landed in an agent's evaluation.
+data AgentMessageDelivery = AgentMessageDeliveryStarted | AgentMessageDeliverySteered | AgentMessageDeliveryQueued
+derive instance eqAgentMessageDelivery :: Eq AgentMessageDelivery
+derive instance ordAgentMessageDelivery :: Ord AgentMessageDelivery
+instance showAgentMessageDelivery :: Show AgentMessageDelivery where
+  show = case _ of
+    AgentMessageDeliveryStarted -> "STARTED"
+    AgentMessageDeliverySteered -> "STEERED"
+    AgentMessageDeliveryQueued -> "QUEUED"
+instance encodeAgentMessageDelivery :: EncodeJson AgentMessageDelivery where
+  encodeJson = encodeJson <<< show
+instance decodeAgentMessageDelivery :: DecodeJson AgentMessageDelivery where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "STARTED" -> Right AgentMessageDeliveryStarted
+      "STEERED" -> Right AgentMessageDeliverySteered
+      "QUEUED" -> Right AgentMessageDeliveryQueued
+      _ -> Left (TypeMismatch "AgentMessageDelivery")
+
+instance moduleValueAgentMessageDelivery :: V.DaggerValue AgentMessageDelivery where
+  valueType _ = V.EnumType "AgentMessageDelivery"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
+
+-- | EXPERIMENTAL: Agent APIs are likely to change.
+-- |
+-- | Computed lifecycle state of an agent.
+data AgentState = AgentStateIdle | AgentStateRunning | AgentStateWaitingInput | AgentStatePaused | AgentStateStopped | AgentStateFailed
+derive instance eqAgentState :: Eq AgentState
+derive instance ordAgentState :: Ord AgentState
+instance showAgentState :: Show AgentState where
+  show = case _ of
+    AgentStateIdle -> "IDLE"
+    AgentStateRunning -> "RUNNING"
+    AgentStateWaitingInput -> "WAITING_INPUT"
+    AgentStatePaused -> "PAUSED"
+    AgentStateStopped -> "STOPPED"
+    AgentStateFailed -> "FAILED"
+instance encodeAgentState :: EncodeJson AgentState where
+  encodeJson = encodeJson <<< show
+instance decodeAgentState :: DecodeJson AgentState where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "IDLE" -> Right AgentStateIdle
+      "RUNNING" -> Right AgentStateRunning
+      "WAITING_INPUT" -> Right AgentStateWaitingInput
+      "PAUSED" -> Right AgentStatePaused
+      "STOPPED" -> Right AgentStateStopped
+      "FAILED" -> Right AgentStateFailed
+      _ -> Left (TypeMismatch "AgentState")
+
+instance moduleValueAgentState :: V.DaggerValue AgentState where
+  valueType _ = V.EnumType "AgentState"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
+
+-- | One workspace value with a complete path and all required dimension keys. Reading metadata does not evaluate the value. Different addresses remain distinct even if they return the same object.
+foreign import data ArtifactTag :: Type
+type Artifact = Object ArtifactTag
+instance objectTypeArtifact :: IsObject ArtifactTag where
+  objectTypeName _ = "Artifact"
+
+foreign import data ArtifactDimensionTag :: Type
+type ArtifactDimension = Object ArtifactDimensionTag
+instance objectTypeArtifactDimension :: IsObject ArtifactDimensionTag where
+  objectTypeName _ = "ArtifactDimension"
+
+foreign import data ArtifactDimensionKeyTag :: Type
+type ArtifactDimensionKey = Object ArtifactDimensionKeyTag
+instance objectTypeArtifactDimensionKey :: IsObject ArtifactDimensionKeyTag where
+  objectTypeName _ = "ArtifactDimensionKey"
+
+data ArtifactDimensionKind = ArtifactDimensionKindCollection | ArtifactDimensionKindModule | ArtifactDimensionKindType
+derive instance eqArtifactDimensionKind :: Eq ArtifactDimensionKind
+derive instance ordArtifactDimensionKind :: Ord ArtifactDimensionKind
+instance showArtifactDimensionKind :: Show ArtifactDimensionKind where
+  show = case _ of
+    ArtifactDimensionKindCollection -> "COLLECTION"
+    ArtifactDimensionKindModule -> "MODULE"
+    ArtifactDimensionKindType -> "TYPE"
+instance encodeArtifactDimensionKind :: EncodeJson ArtifactDimensionKind where
+  encodeJson = encodeJson <<< show
+instance decodeArtifactDimensionKind :: DecodeJson ArtifactDimensionKind where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "COLLECTION" -> Right ArtifactDimensionKindCollection
+      "MODULE" -> Right ArtifactDimensionKindModule
+      "TYPE" -> Right ArtifactDimensionKindType
+      _ -> Left (TypeMismatch "ArtifactDimensionKind")
+
+instance moduleValueArtifactDimensionKind :: V.DaggerValue ArtifactDimensionKind where
+  valueType _ = V.EnumType "ArtifactDimensionKind"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
+
+-- | A schema path and its dimensions. The path can exist even when its collections have no runtime items.
+foreign import data ArtifactPathTag :: Type
+type ArtifactPath = Object ArtifactPathTag
+instance objectTypeArtifactPath :: IsObject ArtifactPathTag where
+  objectTypeName _ = "ArtifactPath"
+
+foreign import data ArtifactResultTag :: Type
+type ArtifactResult = Object ArtifactResultTag
+instance objectTypeArtifactResult :: IsObject ArtifactResultTag where
+  objectTypeName _ = "ArtifactResult"
+
+-- | An immutable selection of workspace artifacts. Listed types, dimensions, and keys use OR; chained filters use AND. Empty alternatives match nothing; unknown names match nothing but module load failures. Filters never change addresses or dimension identifiers. Module keys match a module's configured or kebab-case name. A module that failed to load has no schema, so its load failure stands in for whatever it would hold: a filter keeps it when the module could hold something the filter selects, and an exclusion drops it only by its own address, such as <module>/** or ?module=<module>.
+foreign import data ArtifactsTag :: Type
+type Artifacts = Object ArtifactsTag
+instance objectTypeArtifacts :: IsObject ArtifactsTag where
+  objectTypeName _ = "Artifacts"
 
 -- | Key value object that represents a build argument.
 type BuildArg =
-  { name :: String
-  , value :: String
+  { "name" :: String
+  , "value" :: String
   }
+
+-- | Arbitrary binary data, represented as a base64-encoded string.
+newtype Bytes = Bytes String
+derive instance eqBytes :: Eq Bytes
+derive newtype instance encodeBytes :: EncodeJson Bytes
+derive newtype instance decodeBytes :: DecodeJson Bytes
+
+instance moduleValueBytes :: V.DaggerValue Bytes where
+  valueType _ = V.ScalarType "Bytes"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
 
 -- | Sharing mode of the cache volume.
 data CacheSharingMode = CacheSharingModeShared | CacheSharingModePrivate | CacheSharingModeLocked
@@ -59,6 +221,37 @@ foreign import data CacheVolumeTag :: Type
 type CacheVolume = Object CacheVolumeTag
 instance objectTypeCacheVolume :: IsObject CacheVolumeTag where
   objectTypeName _ = "CacheVolume"
+
+-- | A convention for joining words into an identifier.
+data Casing = CasingPascal | CasingCamel | CasingSnake | CasingScreamingSnake | CasingKebab | CasingFlat
+derive instance eqCasing :: Eq Casing
+derive instance ordCasing :: Ord Casing
+instance showCasing :: Show Casing where
+  show = case _ of
+    CasingPascal -> "PASCAL"
+    CasingCamel -> "CAMEL"
+    CasingSnake -> "SNAKE"
+    CasingScreamingSnake -> "SCREAMING_SNAKE"
+    CasingKebab -> "KEBAB"
+    CasingFlat -> "FLAT"
+instance encodeCasing :: EncodeJson Casing where
+  encodeJson = encodeJson <<< show
+instance decodeCasing :: DecodeJson Casing where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "PASCAL" -> Right CasingPascal
+      "CAMEL" -> Right CasingCamel
+      "SNAKE" -> Right CasingSnake
+      "SCREAMING_SNAKE" -> Right CasingScreamingSnake
+      "KEBAB" -> Right CasingKebab
+      "FLAT" -> Right CasingFlat
+      _ -> Left (TypeMismatch "Casing")
+
+instance moduleValueCasing :: V.DaggerValue Casing where
+  valueType _ = V.EnumType "Casing"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
 
 -- | A comparison between two directories representing changes that can be applied.
 foreign import data ChangesetTag :: Type
@@ -118,21 +311,39 @@ instance moduleValueChangesetsMergeConflict :: V.DaggerValue ChangesetsMergeConf
   decodeValue _ = V.decodeJSON
   encodeValue = pure <<< encodeJson
 
+-- | One deferred check. Reading pass, error, or sync runs it.
 foreign import data CheckTag :: Type
 type Check = Object CheckTag
 instance objectTypeCheck :: IsObject CheckTag where
   objectTypeName _ = "Check"
 
-foreign import data CheckGroupTag :: Type
-type CheckGroup = Object CheckGroupTag
-instance objectTypeCheckGroup :: IsObject CheckGroupTag where
-  objectTypeName _ = "CheckGroup"
+-- | An internal persistent filesync mirror.
+foreign import data ClientFilesyncMirrorTag :: Type
+type ClientFilesyncMirror = Object ClientFilesyncMirrorTag
+instance objectTypeClientFilesyncMirror :: IsObject ClientFilesyncMirrorTag where
+  objectTypeName _ = "ClientFilesyncMirror"
 
 -- | Dagger Cloud configuration and state
 foreign import data CloudTag :: Type
 type Cloud = Object CloudTag
 instance objectTypeCloud :: IsObject CloudTag where
   objectTypeName _ = "Cloud"
+
+foreign import data CollectionDeltaTag :: Type
+type CollectionDelta = Object CollectionDeltaTag
+instance objectTypeCollectionDelta :: IsObject CollectionDeltaTag where
+  objectTypeName _ = "CollectionDelta"
+
+foreign import data CollectionTypeDefTag :: Type
+type CollectionTypeDef = Object CollectionTypeDefTag
+instance objectTypeCollectionTypeDef :: IsObject CollectionTypeDefTag where
+  objectTypeName _ = "CollectionTypeDef"
+
+-- | A command's arguments and execution settings.
+foreign import data CommandTag :: Type
+type Command = Object CommandTag
+instance objectTypeCommand :: IsObject CommandTag where
+  objectTypeName _ = "Command"
 
 -- | An OCI-compatible container, also known as a Docker container.
 foreign import data ContainerTag :: Type
@@ -145,6 +356,38 @@ foreign import data CurrentModuleTag :: Type
 type CurrentModule = Object CurrentModuleTag
 instance objectTypeCurrentModule :: IsObject CurrentModuleTag where
   objectTypeName _ = "CurrentModule"
+
+foreign import data DiffStatTag :: Type
+type DiffStat = Object DiffStatTag
+instance objectTypeDiffStat :: IsObject DiffStatTag where
+  objectTypeName _ = "DiffStat"
+
+-- | The type of change for a diff stat entry.
+data DiffStatKind = DiffStatKindAdded | DiffStatKindModified | DiffStatKindRemoved | DiffStatKindRenamed
+derive instance eqDiffStatKind :: Eq DiffStatKind
+derive instance ordDiffStatKind :: Ord DiffStatKind
+instance showDiffStatKind :: Show DiffStatKind where
+  show = case _ of
+    DiffStatKindAdded -> "ADDED"
+    DiffStatKindModified -> "MODIFIED"
+    DiffStatKindRemoved -> "REMOVED"
+    DiffStatKindRenamed -> "RENAMED"
+instance encodeDiffStatKind :: EncodeJson DiffStatKind where
+  encodeJson = encodeJson <<< show
+instance decodeDiffStatKind :: DecodeJson DiffStatKind where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "ADDED" -> Right DiffStatKindAdded
+      "MODIFIED" -> Right DiffStatKindModified
+      "REMOVED" -> Right DiffStatKindRemoved
+      "RENAMED" -> Right DiffStatKindRenamed
+      _ -> Left (TypeMismatch "DiffStatKind")
+
+instance moduleValueDiffStatKind :: V.DaggerValue DiffStatKind where
+  valueType _ = V.EnumType "DiffStatKind"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
 
 -- | A directory.
 foreign import data DirectoryTag :: Type
@@ -187,11 +430,6 @@ foreign import data EnumValueTypeDefTag :: Type
 type EnumValueTypeDef = Object EnumValueTypeDefTag
 instance objectTypeEnumValueTypeDef :: IsObject EnumValueTypeDefTag where
   objectTypeName _ = "EnumValueTypeDef"
-
-foreign import data EnvTag :: Type
-type Env = Object EnvTag
-instance objectTypeEnv :: IsObject EnvTag where
-  objectTypeName _ = "Env"
 
 -- | A collection of environment variables.
 foreign import data EnvFileTag :: Type
@@ -240,8 +478,22 @@ instance moduleValueExistsType :: V.DaggerValue ExistsType where
   decodeValue _ = V.decodeJSON
   encodeValue = pure <<< encodeJson
 
+-- | A function that can modify a conversation.
+foreign import data ExpertiseTag :: Type
+type Expertise = Object ExpertiseTag
+instance objectTypeExpertise :: IsObject ExpertiseTag where
+  objectTypeName _ = "Expertise"
+
+-- | An object that can be exported to the host.
+-- |
+-- | Calling export writes the object to a path on the host filesystem and returns the path that was written.
+foreign import data ExportableTag :: Type
+type Exportable = Object ExportableTag
+instance objectTypeExportable :: IsObject ExportableTag where
+  objectTypeName _ = "Exportable"
+
 -- | A definition of a field on a custom object defined in a Module.
--- | 
+-- |
 -- | A field on an object has a static value, as opposed to a function on an object whose value is computed by invoking code (and can accept arguments).
 foreign import data FieldTypeDefTag :: Type
 type FieldTypeDef = Object FieldTypeDefTag
@@ -288,7 +540,7 @@ instance moduleValueFileType :: V.DaggerValue FileType where
   encodeValue = pure <<< encodeJson
 
 -- | Function represents a resolver provided by a Module.
--- | 
+-- |
 -- | A function always evaluates against a parent object and is given a set of named arguments.
 foreign import data FunctionTag :: Type
 type Function = Object FunctionTag
@@ -296,7 +548,7 @@ instance objectTypeFunction :: IsObject FunctionTag where
   objectTypeName _ = "Function"
 
 -- | An argument accepted by a function.
--- | 
+-- |
 -- | This is a specification for an argument at function definition time, not an argument passed at function call time.
 foreign import data FunctionArgTag :: Type
 type FunctionArg = Object FunctionArgTag
@@ -346,21 +598,74 @@ type GeneratedCode = Object GeneratedCodeTag
 instance objectTypeGeneratedCode :: IsObject GeneratedCodeTag where
   objectTypeName _ = "GeneratedCode"
 
+-- | A generation function and its staleness check. Reading changeset runs the function.
 foreign import data GeneratorTag :: Type
 type Generator = Object GeneratorTag
 instance objectTypeGenerator :: IsObject GeneratorTag where
   objectTypeName _ = "Generator"
 
-foreign import data GeneratorGroupTag :: Type
-type GeneratorGroup = Object GeneratorGroupTag
-instance objectTypeGeneratorGroup :: IsObject GeneratorGroupTag where
-  objectTypeName _ = "GeneratorGroup"
+-- | A Git bundle: a self-describing container of refs and the objects needed to reconstruct them, optionally rooted at prerequisite commits.
+foreign import data GitBundleTag :: Type
+type GitBundle = Object GitBundleTag
+instance objectTypeGitBundle :: IsObject GitBundleTag where
+  objectTypeName _ = "GitBundle"
+
+-- | A ref advertised by a Git bundle.
+foreign import data GitBundleRefTag :: Type
+type GitBundleRef = Object GitBundleRefTag
+instance objectTypeGitBundleRef :: IsObject GitBundleRefTag where
+  objectTypeName _ = "GitBundleRef"
+
+-- | An immutable git commit.
+foreign import data GitCommitTag :: Type
+type GitCommit = Object GitCommitTag
+instance objectTypeGitCommit :: IsObject GitCommitTag where
+  objectTypeName _ = "GitCommit"
+
+-- | How a Git push updated the remote ref.
+data GitPushDisposition = GitPushDispositionCreated | GitPushDispositionFastForward | GitPushDispositionForced | GitPushDispositionUpToDate
+derive instance eqGitPushDisposition :: Eq GitPushDisposition
+derive instance ordGitPushDisposition :: Ord GitPushDisposition
+instance showGitPushDisposition :: Show GitPushDisposition where
+  show = case _ of
+    GitPushDispositionCreated -> "CREATED"
+    GitPushDispositionFastForward -> "FAST_FORWARD"
+    GitPushDispositionForced -> "FORCED"
+    GitPushDispositionUpToDate -> "UP_TO_DATE"
+instance encodeGitPushDisposition :: EncodeJson GitPushDisposition where
+  encodeJson = encodeJson <<< show
+instance decodeGitPushDisposition :: DecodeJson GitPushDisposition where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "CREATED" -> Right GitPushDispositionCreated
+      "FAST_FORWARD" -> Right GitPushDispositionFastForward
+      "FORCED" -> Right GitPushDispositionForced
+      "UP_TO_DATE" -> Right GitPushDispositionUpToDate
+      _ -> Left (TypeMismatch "GitPushDisposition")
+
+instance moduleValueGitPushDisposition :: V.DaggerValue GitPushDisposition where
+  valueType _ = V.EnumType "GitPushDisposition"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
+
+-- | A receipt for a completed Git push. Reading or replaying the receipt does not push again.
+foreign import data GitPushResultTag :: Type
+type GitPushResult = Object GitPushResultTag
+instance objectTypeGitPushResult :: IsObject GitPushResultTag where
+  objectTypeName _ = "GitPushResult"
 
 -- | A git ref (tag, branch, or commit).
 foreign import data GitRefTag :: Type
 type GitRef = Object GitRefTag
 instance objectTypeGitRef :: IsObject GitRefTag where
   objectTypeName _ = "GitRef"
+
+-- | A named reference to a remote Git repository.
+foreign import data GitRemoteTag :: Type
+type GitRemote = Object GitRemoteTag
+instance objectTypeGitRemote :: IsObject GitRemoteTag where
+  objectTypeName _ = "GitRemote"
 
 -- | A git repository.
 foreign import data GitRepositoryTag :: Type
@@ -380,6 +685,12 @@ type Host = Object HostTag
 instance objectTypeHost :: IsObject HostTag where
   objectTypeName _ = "Host"
 
+-- | An internal persistent HTTP state.
+foreign import data HTTPStateTag :: Type
+type HTTPState = Object HTTPStateTag
+instance objectTypeHTTPState :: IsObject HTTPStateTag where
+  objectTypeName _ = "HTTPState"
+
 -- | A unique identifier for an object.
 newtype ID = ID String
 derive instance eqID :: Eq ID
@@ -388,6 +699,43 @@ derive newtype instance decodeID :: DecodeJson ID
 
 instance moduleValueID :: V.DaggerValue ID where
   valueType _ = V.ScalarType "ID"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
+
+-- | A name parsed into words, which can be formatted in any casing.
+foreign import data IdentifierTag :: Type
+type Identifier = Object IdentifierTag
+instance objectTypeIdentifier :: IsObject IdentifierTag where
+  objectTypeName _ = "Identifier"
+
+-- | One word of an identifier.
+foreign import data IdentifierWordTag :: Type
+type IdentifierWord = Object IdentifierWordTag
+instance objectTypeIdentifierWord :: IsObject IdentifierWordTag where
+  objectTypeName _ = "IdentifierWord"
+
+-- | The kind of a word in an identifier.
+data IdentifierWordKind = IdentifierWordKindWord | IdentifierWordKindAcronym | IdentifierWordKindTerm
+derive instance eqIdentifierWordKind :: Eq IdentifierWordKind
+derive instance ordIdentifierWordKind :: Ord IdentifierWordKind
+instance showIdentifierWordKind :: Show IdentifierWordKind where
+  show = case _ of
+    IdentifierWordKindWord -> "WORD"
+    IdentifierWordKindAcronym -> "ACRONYM"
+    IdentifierWordKindTerm -> "TERM"
+instance encodeIdentifierWordKind :: EncodeJson IdentifierWordKind where
+  encodeJson = encodeJson <<< show
+instance decodeIdentifierWordKind :: DecodeJson IdentifierWordKind where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "WORD" -> Right IdentifierWordKindWord
+      "ACRONYM" -> Right IdentifierWordKindAcronym
+      "TERM" -> Right IdentifierWordKindTerm
+      _ -> Left (TypeMismatch "IdentifierWordKind")
+
+instance moduleValueIdentifierWordKind :: V.DaggerValue IdentifierWordKind where
+  valueType _ = V.EnumType "IdentifierWordKind"
   decodeValue _ = V.decodeJSON
   encodeValue = pure <<< encodeJson
 
@@ -496,11 +844,159 @@ type ListTypeDef = Object ListTypeDefTag
 instance objectTypeListTypeDef :: IsObject ListTypeDefTag where
   objectTypeName _ = "ListTypeDef"
 
+-- | A conversation with a large language model (LLM): queue prompts, expose tools, and step the model until it completes its turn.
 foreign import data LLMTag :: Type
 type LLM = Object LLMTag
 instance objectTypeLLM :: IsObject LLMTag where
   objectTypeName _ = "LLM"
 
+-- | An ordered run of text and media content for a model to read, built outside any conversation.
+foreign import data LLMContentTag :: Type
+type LLMContent = Object LLMContentTag
+instance objectTypeLLMContent :: IsObject LLMContentTag where
+  objectTypeName _ = "LLMContent"
+
+-- | A single piece of content within an LLM message.
+foreign import data LLMContentBlockTag :: Type
+type LLMContentBlock = Object LLMContentBlockTag
+instance objectTypeLLMContentBlock :: IsObject LLMContentBlockTag where
+  objectTypeName _ = "LLMContentBlock"
+
+-- | A content block within an LLM message.
+newtype LLMContentBlockInput = LLMContentBlockInput
+  { "kind" :: LLMContentBlockKind
+  , "text" :: (Maybe String)
+  , "callId" :: (Maybe String)
+  , "toolName" :: (Maybe String)
+  , "arguments" :: (Maybe JSON)
+  , "errored" :: (Maybe Boolean)
+  , "signature" :: (Maybe String)
+  , "mimeType" :: (Maybe String)
+  , "data" :: (Maybe Bytes)
+  , "file" :: (Maybe ID)
+  , "content" :: (Maybe (Array LLMContentBlockInput))
+  }
+instance encodeLLMContentBlockInput :: EncodeJson LLMContentBlockInput where
+  encodeJson (LLMContentBlockInput value) = encodeJson value
+instance decodeLLMContentBlockInput :: DecodeJson LLMContentBlockInput where
+  decodeJson value = LLMContentBlockInput <$> decodeJson value
+
+-- | The kind of content in a message block.
+data LLMContentBlockKind = LLMContentBlockKindText | LLMContentBlockKindThinking | LLMContentBlockKindToolCall | LLMContentBlockKindToolResult | LLMContentBlockKindImage | LLMContentBlockKindAudio | LLMContentBlockKindDocument
+derive instance eqLLMContentBlockKind :: Eq LLMContentBlockKind
+derive instance ordLLMContentBlockKind :: Ord LLMContentBlockKind
+instance showLLMContentBlockKind :: Show LLMContentBlockKind where
+  show = case _ of
+    LLMContentBlockKindText -> "TEXT"
+    LLMContentBlockKindThinking -> "THINKING"
+    LLMContentBlockKindToolCall -> "TOOL_CALL"
+    LLMContentBlockKindToolResult -> "TOOL_RESULT"
+    LLMContentBlockKindImage -> "IMAGE"
+    LLMContentBlockKindAudio -> "AUDIO"
+    LLMContentBlockKindDocument -> "DOCUMENT"
+instance encodeLLMContentBlockKind :: EncodeJson LLMContentBlockKind where
+  encodeJson = encodeJson <<< show
+instance decodeLLMContentBlockKind :: DecodeJson LLMContentBlockKind where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "TEXT" -> Right LLMContentBlockKindText
+      "THINKING" -> Right LLMContentBlockKindThinking
+      "TOOL_CALL" -> Right LLMContentBlockKindToolCall
+      "TOOL_RESULT" -> Right LLMContentBlockKindToolResult
+      "IMAGE" -> Right LLMContentBlockKindImage
+      "AUDIO" -> Right LLMContentBlockKindAudio
+      "DOCUMENT" -> Right LLMContentBlockKindDocument
+      _ -> Left (TypeMismatch "LLMContentBlockKind")
+
+instance moduleValueLLMContentBlockKind :: V.DaggerValue LLMContentBlockKind where
+  valueType _ = V.EnumType "LLMContentBlockKind"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
+
+-- | A single message in an LLM conversation.
+foreign import data LLMMessageTag :: Type
+type LLMMessage = Object LLMMessageTag
+instance objectTypeLLMMessage :: IsObject LLMMessageTag where
+  objectTypeName _ = "LLMMessage"
+
+-- | EXPERIMENTAL: Agent APIs are likely to change.
+-- |
+-- | The recorded provenance of a message that arrived through an agent mailbox.
+foreign import data LLMMessageOriginTag :: Type
+type LLMMessageOrigin = Object LLMMessageOriginTag
+instance objectTypeLLMMessageOrigin :: IsObject LLMMessageOriginTag where
+  objectTypeName _ = "LLMMessageOrigin"
+
+-- | EXPERIMENTAL: Agent APIs are likely to change.
+-- |
+-- | The provenance of a message delivered through an agent mailbox.
+type LLMMessageOriginInput =
+  { "kind" :: LLMMessageOriginKind
+  , "agentName" :: (Maybe String)
+  , "ref" :: (Maybe String)
+  , "replyTo" :: (Maybe String)
+  }
+
+-- | EXPERIMENTAL: Agent APIs are likely to change.
+-- |
+-- | Who put a message on the conversation record.
+data LLMMessageOriginKind = LLMMessageOriginKindUser | LLMMessageOriginKindAgent | LLMMessageOriginKindEvent
+derive instance eqLLMMessageOriginKind :: Eq LLMMessageOriginKind
+derive instance ordLLMMessageOriginKind :: Ord LLMMessageOriginKind
+instance showLLMMessageOriginKind :: Show LLMMessageOriginKind where
+  show = case _ of
+    LLMMessageOriginKindUser -> "USER"
+    LLMMessageOriginKindAgent -> "AGENT"
+    LLMMessageOriginKindEvent -> "EVENT"
+instance encodeLLMMessageOriginKind :: EncodeJson LLMMessageOriginKind where
+  encodeJson = encodeJson <<< show
+instance decodeLLMMessageOriginKind :: DecodeJson LLMMessageOriginKind where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "USER" -> Right LLMMessageOriginKindUser
+      "AGENT" -> Right LLMMessageOriginKindAgent
+      "EVENT" -> Right LLMMessageOriginKindEvent
+      _ -> Left (TypeMismatch "LLMMessageOriginKind")
+
+instance moduleValueLLMMessageOriginKind :: V.DaggerValue LLMMessageOriginKind where
+  valueType _ = V.EnumType "LLMMessageOriginKind"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
+
+-- | The role that generated a message.
+data LLMMessageRole = LLMMessageRoleUser | LLMMessageRoleAssistant | LLMMessageRoleSystem
+derive instance eqLLMMessageRole :: Eq LLMMessageRole
+derive instance ordLLMMessageRole :: Ord LLMMessageRole
+instance showLLMMessageRole :: Show LLMMessageRole where
+  show = case _ of
+    LLMMessageRoleUser -> "USER"
+    LLMMessageRoleAssistant -> "ASSISTANT"
+    LLMMessageRoleSystem -> "SYSTEM"
+instance encodeLLMMessageRole :: EncodeJson LLMMessageRole where
+  encodeJson = encodeJson <<< show
+instance decodeLLMMessageRole :: DecodeJson LLMMessageRole where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "USER" -> Right LLMMessageRoleUser
+      "ASSISTANT" -> Right LLMMessageRoleAssistant
+      "SYSTEM" -> Right LLMMessageRoleSystem
+      _ -> Left (TypeMismatch "LLMMessageRole")
+
+instance moduleValueLLMMessageRole :: V.DaggerValue LLMMessageRole where
+  valueType _ = V.EnumType "LLMMessageRole"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
+
+-- | A skill available to a model: task-specific guidance discovered with ListSkills and read with ReadSkill.
+foreign import data LLMSkillTag :: Type
+type LLMSkill = Object LLMSkillTag
+instance objectTypeLLMSkill :: IsObject LLMSkillTag where
+  objectTypeName _ = "LLMSkill"
+
+-- | A count of tokens consumed by LLM API calls.
 foreign import data LLMTokenUsageTag :: Type
 type LLMTokenUsage = Object LLMTokenUsageTag
 instance objectTypeLLMTokenUsage :: IsObject LLMTokenUsageTag where
@@ -576,6 +1072,12 @@ instance moduleValueModuleSourceKind :: V.DaggerValue ModuleSourceKind where
   decodeValue _ = V.decodeJSON
   encodeValue = pure <<< encodeJson
 
+-- | An entry in the naming dictionary.
+foreign import data NamingTermTag :: Type
+type NamingTerm = Object NamingTermTag
+instance objectTypeNamingTerm :: IsObject NamingTermTag where
+  objectTypeName _ = "NamingTerm"
+
 -- | Transport layer network protocol associated to a port.
 data NetworkProtocol = NetworkProtocolTcp | NetworkProtocolUdp
 derive instance eqNetworkProtocol :: Eq NetworkProtocol
@@ -611,14 +1113,37 @@ type ObjectTypeDef = Object ObjectTypeDefTag
 instance objectTypeObjectTypeDef :: IsObject ObjectTypeDefTag where
   objectTypeName _ = "ObjectTypeDef"
 
+-- | How to handle patch hunks that no longer apply to the target content.
+data PatchConflict = PatchConflictFail | PatchConflictLeaveConflictMarkers
+derive instance eqPatchConflict :: Eq PatchConflict
+derive instance ordPatchConflict :: Ord PatchConflict
+instance showPatchConflict :: Show PatchConflict where
+  show = case _ of
+    PatchConflictFail -> "FAIL"
+    PatchConflictLeaveConflictMarkers -> "LEAVE_CONFLICT_MARKERS"
+instance encodePatchConflict :: EncodeJson PatchConflict where
+  encodeJson = encodeJson <<< show
+instance decodePatchConflict :: DecodeJson PatchConflict where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "FAIL" -> Right PatchConflictFail
+      "LEAVE_CONFLICT_MARKERS" -> Right PatchConflictLeaveConflictMarkers
+      _ -> Left (TypeMismatch "PatchConflict")
+
+instance moduleValuePatchConflict :: V.DaggerValue PatchConflict where
+  valueType _ = V.EnumType "PatchConflict"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
+
 -- | Key value object that represents a pipeline label.
 type PipelineLabel =
-  { name :: String
-  , value :: String
+  { "name" :: String
+  , "value" :: String
   }
 
 -- | The platform config OS and architecture in a Container.
--- | 
+-- |
 -- | The format is [os]/[platform]/[version] (e.g., "darwin/arm64/v7", "windows/amd64", "linux/arm64").
 newtype Platform = Platform String
 derive instance eqPlatform :: Eq Platform
@@ -638,9 +1163,9 @@ instance objectTypePort :: IsObject PortTag where
 
 -- | Port forwarding rules for tunneling network traffic.
 type PortForward =
-  { frontend :: (Maybe Int)
-  , backend :: Int
-  , protocol :: (Maybe NetworkProtocol)
+  { "frontend" :: (Maybe Int)
+  , "backend" :: Int
+  , "protocol" :: (Maybe NetworkProtocol)
   }
 
 -- | The root of the DAG.
@@ -648,6 +1173,35 @@ foreign import data QueryTag :: Type
 type Query = Object QueryTag
 instance objectTypeQuery :: IsObject QueryTag where
   objectTypeName _ = "Query"
+
+-- | Transport protocol to use for registry operations.
+data RegistryProtocol = RegistryProtocolHttps | RegistryProtocolHttp
+derive instance eqRegistryProtocol :: Eq RegistryProtocol
+derive instance ordRegistryProtocol :: Ord RegistryProtocol
+instance showRegistryProtocol :: Show RegistryProtocol where
+  show = case _ of
+    RegistryProtocolHttps -> "HTTPS"
+    RegistryProtocolHttp -> "HTTP"
+instance encodeRegistryProtocol :: EncodeJson RegistryProtocol where
+  encodeJson = encodeJson <<< show
+instance decodeRegistryProtocol :: DecodeJson RegistryProtocol where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "HTTPS" -> Right RegistryProtocolHttps
+      "HTTP" -> Right RegistryProtocolHttp
+      _ -> Left (TypeMismatch "RegistryProtocol")
+
+instance moduleValueRegistryProtocol :: V.DaggerValue RegistryProtocol where
+  valueType _ = V.EnumType "RegistryProtocol"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
+
+-- | An internal persistent bare git mirror.
+foreign import data RemoteGitMirrorTag :: Type
+type RemoteGitMirror = Object RemoteGitMirrorTag
+instance objectTypeRemoteGitMirror :: IsObject RemoteGitMirrorTag where
+  objectTypeName _ = "RemoteGitMirror"
 
 -- | Expected return type of an execution
 data ReturnType = ReturnTypeSuccess | ReturnTypeFailure | ReturnTypeAny
@@ -679,6 +1233,12 @@ foreign import data ScalarTypeDefTag :: Type
 type ScalarTypeDef = Object ScalarTypeDefTag
 instance objectTypeScalarTypeDef :: IsObject ScalarTypeDefTag where
   objectTypeName _ = "ScalarTypeDef"
+
+-- | A GraphQL introspection schema that can be inspected and merged.
+foreign import data SchemaTag :: Type
+type Schema = Object SchemaTag
+instance objectTypeSchema :: IsObject SchemaTag where
+  objectTypeName _ = "Schema"
 
 -- | The SDK config of the module.
 foreign import data SDKConfigTag :: Type
@@ -725,6 +1285,14 @@ foreign import data StatTag :: Type
 type Stat = Object StatTag
 instance objectTypeStat :: IsObject StatTag where
   objectTypeName _ = "Stat"
+
+-- | An object that can be force-evaluated.
+-- |
+-- | Calling sync ensures that the object's entire dependency DAG has been evaluated, returning the object's ID once complete.
+foreign import data SyncerTag :: Type
+type Syncer = Object SyncerTag
+instance objectTypeSyncer :: IsObject SyncerTag where
+  objectTypeName _ = "Syncer"
 
 -- | An interactive terminal that clients can connect to.
 foreign import data TerminalTag :: Type
@@ -802,7 +1370,7 @@ instance moduleValueTypeDefKind :: V.DaggerValue TypeDefKind where
   encodeValue = pure <<< encodeJson
 
 -- | The absence of a value.
--- | 
+-- |
 -- | A Null Void is used as a placeholder for resolvers that do not return anything.
 newtype Void = Void Json
 derive instance eqVoid :: Eq Void
@@ -814,8 +1382,108 @@ instance moduleValueVoid :: V.DaggerValue Void where
   decodeValue _ = V.decodeJSON
   encodeValue = pure <<< encodeJson
 
--- | A Dagger workspace detected from the current working directory.
+-- | A filesystem volume that can be mounted into containers.
+foreign import data VolumeTag :: Type
+type Volume = Object VolumeTag
+instance objectTypeVolume :: IsObject VolumeTag where
+  objectTypeName _ = "Volume"
+
+-- | A Dagger workspace detected from the current working directory or constructed from a Directory.
 foreign import data WorkspaceTag :: Type
 type Workspace = Object WorkspaceTag
 instance objectTypeWorkspace :: IsObject WorkspaceTag where
   objectTypeName _ = "Workspace"
+
+-- | A source commit classified against the receiving workspace.
+foreign import data WorkspaceCommitPickTag :: Type
+type WorkspaceCommitPick = Object WorkspaceCommitPickTag
+instance objectTypeWorkspaceCommitPick :: IsObject WorkspaceCommitPickTag where
+  objectTypeName _ = "WorkspaceCommitPick"
+
+-- | Why a source commit cannot be pulled.
+data WorkspaceCommitPickReason = WorkspaceCommitPickReasonNone | WorkspaceCommitPickReasonContent | WorkspaceCommitPickReasonDirty
+derive instance eqWorkspaceCommitPickReason :: Eq WorkspaceCommitPickReason
+derive instance ordWorkspaceCommitPickReason :: Ord WorkspaceCommitPickReason
+instance showWorkspaceCommitPickReason :: Show WorkspaceCommitPickReason where
+  show = case _ of
+    WorkspaceCommitPickReasonNone -> "NONE"
+    WorkspaceCommitPickReasonContent -> "CONTENT"
+    WorkspaceCommitPickReasonDirty -> "DIRTY"
+instance encodeWorkspaceCommitPickReason :: EncodeJson WorkspaceCommitPickReason where
+  encodeJson = encodeJson <<< show
+instance decodeWorkspaceCommitPickReason :: DecodeJson WorkspaceCommitPickReason where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "NONE" -> Right WorkspaceCommitPickReasonNone
+      "CONTENT" -> Right WorkspaceCommitPickReasonContent
+      "DIRTY" -> Right WorkspaceCommitPickReasonDirty
+      _ -> Left (TypeMismatch "WorkspaceCommitPickReason")
+
+instance moduleValueWorkspaceCommitPickReason :: V.DaggerValue WorkspaceCommitPickReason where
+  valueType _ = V.EnumType "WorkspaceCommitPickReason"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
+
+-- | Whether a source commit can be pulled.
+data WorkspaceCommitPickStatus = WorkspaceCommitPickStatusPickable | WorkspaceCommitPickStatusPicked | WorkspaceCommitPickStatusRedundant | WorkspaceCommitPickStatusConflict
+derive instance eqWorkspaceCommitPickStatus :: Eq WorkspaceCommitPickStatus
+derive instance ordWorkspaceCommitPickStatus :: Ord WorkspaceCommitPickStatus
+instance showWorkspaceCommitPickStatus :: Show WorkspaceCommitPickStatus where
+  show = case _ of
+    WorkspaceCommitPickStatusPickable -> "PICKABLE"
+    WorkspaceCommitPickStatusPicked -> "PICKED"
+    WorkspaceCommitPickStatusRedundant -> "REDUNDANT"
+    WorkspaceCommitPickStatusConflict -> "CONFLICT"
+instance encodeWorkspaceCommitPickStatus :: EncodeJson WorkspaceCommitPickStatus where
+  encodeJson = encodeJson <<< show
+instance decodeWorkspaceCommitPickStatus :: DecodeJson WorkspaceCommitPickStatus where
+  decodeJson value = do
+    name <- decodeJson value
+    case name of
+      "PICKABLE" -> Right WorkspaceCommitPickStatusPickable
+      "PICKED" -> Right WorkspaceCommitPickStatusPicked
+      "REDUNDANT" -> Right WorkspaceCommitPickStatusRedundant
+      "CONFLICT" -> Right WorkspaceCommitPickStatusConflict
+      _ -> Left (TypeMismatch "WorkspaceCommitPickStatus")
+
+instance moduleValueWorkspaceCommitPickStatus :: V.DaggerValue WorkspaceCommitPickStatus where
+  valueType _ = V.EnumType "WorkspaceCommitPickStatus"
+  decodeValue _ = V.decodeJSON
+  encodeValue = pure <<< encodeJson
+
+-- | Local git state for a workspace.
+foreign import data WorkspaceGitTag :: Type
+type WorkspaceGit = Object WorkspaceGitTag
+instance objectTypeWorkspaceGit :: IsObject WorkspaceGitTag where
+  objectTypeName _ = "WorkspaceGit"
+
+-- | A planned workspace migration.
+foreign import data WorkspaceMigrationTag :: Type
+type WorkspaceMigration = Object WorkspaceMigrationTag
+instance objectTypeWorkspaceMigration :: IsObject WorkspaceMigrationTag where
+  objectTypeName _ = "WorkspaceMigration"
+
+-- | A single logical part of a workspace migration.
+foreign import data WorkspaceMigrationStepTag :: Type
+type WorkspaceMigrationStep = Object WorkspaceMigrationStepTag
+instance objectTypeWorkspaceMigrationStep :: IsObject WorkspaceMigrationStepTag where
+  objectTypeName _ = "WorkspaceMigrationStep"
+
+-- | A module entry in the workspace configuration.
+foreign import data WorkspaceModuleTag :: Type
+type WorkspaceModule = Object WorkspaceModuleTag
+instance objectTypeWorkspaceModule :: IsObject WorkspaceModuleTag where
+  objectTypeName _ = "WorkspaceModule"
+
+-- | A constructor-backed module setting.
+foreign import data WorkspaceModuleSettingTag :: Type
+type WorkspaceModuleSetting = Object WorkspaceModuleSettingTag
+instance objectTypeWorkspaceModuleSetting :: IsObject WorkspaceModuleSettingTag where
+  objectTypeName _ = "WorkspaceModuleSetting"
+
+-- | An installed SDK: a module marked for scaffolding other modules and clients.
+foreign import data WorkspaceSDKTag :: Type
+type WorkspaceSDK = Object WorkspaceSDKTag
+instance objectTypeWorkspaceSDK :: IsObject WorkspaceSDKTag where
+  objectTypeName _ = "WorkspaceSDK"

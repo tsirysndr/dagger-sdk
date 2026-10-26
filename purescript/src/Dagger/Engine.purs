@@ -18,7 +18,7 @@ clients = R.scalar "clients" []
 id :: T.Engine -> Aff T.ID
 id = R.scalar "id" []
 
--- | The local (on-disk) cache for the Dagger engine
+-- | The local engine cache state tracked by dagql
 localCache :: T.Engine -> T.EngineCache
 localCache = R.select "localCache" []
 

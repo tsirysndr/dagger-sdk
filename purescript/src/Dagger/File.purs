@@ -4,6 +4,7 @@ module Dagger.File
   , asEnvFileWith
   , AsEnvFileOpts
   , defaultAsEnvFileOpts
+  , asGitBundle
   , asJSON
   , chown
   , contents
@@ -56,6 +57,10 @@ asEnvFile = asEnvFileWith defaultAsEnvFileOpts
 -- | Parse as an env file
 asEnvFileWith :: AsEnvFileOpts -> T.File -> T.EnvFile
 asEnvFileWith opts = R.select "asEnvFile" [R.optional (R.argument "expand" "Boolean") opts.expand]
+
+-- | Interpret this file as a Git bundle by lazily parsing its header.
+asGitBundle :: T.File -> T.GitBundle
+asGitBundle = R.select "asGitBundle" []
 
 -- | Parse the file contents as JSON.
 asJSON :: T.File -> T.JSONValue
@@ -154,13 +159,13 @@ defaultSearchOpts =
   }
 
 -- | Searches for content matching the given regular expression or literal string.
--- | 
+-- |
 -- | Uses Rust regex syntax; escape literal ., [, ], {, }, | with backslashes.
 search :: String -> T.File -> Aff (Array T.SearchResult)
 search argPattern = searchWith argPattern defaultSearchOpts
 
 -- | Searches for content matching the given regular expression or literal string.
--- | 
+-- |
 -- | Uses Rust regex syntax; escape literal ., [, ], {, }, | with backslashes.
 searchWith :: String -> SearchOpts -> T.File -> Aff (Array T.SearchResult)
 searchWith argPattern opts = R.objectList "SearchResult" "search" [R.argument "pattern" "String!" argPattern, R.optional (R.argument "literal" "Boolean") opts.literal, R.optional (R.argument "multiline" "Boolean") opts.multiline, R.optional (R.argument "dotall" "Boolean") opts.dotall, R.optional (R.argument "insensitive" "Boolean") opts.insensitive, R.optional (R.argument "skipIgnored" "Boolean") opts.skipIgnored, R.optional (R.argument "skipHidden" "Boolean") opts.skipHidden, R.optional (R.argument "filesOnly" "Boolean") opts.filesOnly, R.optional (R.argument "limit" "Int") opts.limit, R.optional (R.argument "paths" "[String!]") opts.paths, R.optional (R.argument "globs" "[String!]") opts.globs]
@@ -193,25 +198,25 @@ defaultWithReplacedOpts =
   }
 
 -- | Retrieves the file with content replaced with the given text.
--- | 
+-- |
 -- | If 'all' is true, all occurrences of the pattern will be replaced.
--- | 
+-- |
 -- | If 'firstAfter' is specified, only the first match starting at the specified line will be replaced.
--- | 
+-- |
 -- | If neither are specified, and there are multiple matches for the pattern, this will error.
--- | 
+-- |
 -- | If there are no matches for the pattern, this will error.
 withReplaced :: String -> String -> T.File -> T.File
 withReplaced argSearch argReplacement = withReplacedWith argSearch argReplacement defaultWithReplacedOpts
 
 -- | Retrieves the file with content replaced with the given text.
--- | 
+-- |
 -- | If 'all' is true, all occurrences of the pattern will be replaced.
--- | 
+-- |
 -- | If 'firstAfter' is specified, only the first match starting at the specified line will be replaced.
--- | 
+-- |
 -- | If neither are specified, and there are multiple matches for the pattern, this will error.
--- | 
+-- |
 -- | If there are no matches for the pattern, this will error.
 withReplacedWith :: String -> String -> WithReplacedOpts -> T.File -> T.File
 withReplacedWith argSearch argReplacement opts = R.select "withReplaced" [R.argument "search" "String!" argSearch, R.argument "replacement" "String!" argReplacement, R.optional (R.argument "all" "Boolean") opts.all, R.optional (R.argument "firstFrom" "Int") opts.firstFrom]

@@ -13,7 +13,7 @@ id :: T.Terminal -> Aff T.ID
 id = R.scalar "id" []
 
 -- | Forces evaluation of the pipeline in the engine.
--- | 
+-- |
 -- | It doesn't run the default command if no exec has been set.
 sync :: T.Terminal -> Aff T.ID
 sync = R.scalar "sync" []

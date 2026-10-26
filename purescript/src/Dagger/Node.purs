@@ -2,14 +2,25 @@
 module Dagger.Node
   ( id
   , asAddress
-  , asBinding
+  , asAgent
+  , asAgentMessage
+  , asArtifact
+  , asArtifactDimension
+  , asArtifactDimensionKey
+  , asArtifactPath
+  , asArtifactResult
+  , asArtifacts
   , asCacheVolume
   , asChangeset
   , asCheck
-  , asCheckGroup
+  , asClientFilesyncMirror
   , asCloud
+  , asCollectionDelta
+  , asCollectionTypeDef
+  , asCommand
   , asContainer
   , asCurrentModule
+  , asDiffStat
   , asDirectory
   , asEngine
   , asEngineCache
@@ -17,11 +28,11 @@ module Dagger.Node
   , asEngineCacheEntrySet
   , asEnumTypeDef
   , asEnumValueTypeDef
-  , asEnv
   , asEnvFile
   , asEnvVariable
   , asError
   , asErrorValue
+  , asExpertise
   , asFieldTypeDef
   , asFile
   , asFunction
@@ -30,26 +41,41 @@ module Dagger.Node
   , asFunctionCallArgValue
   , asGeneratedCode
   , asGenerator
-  , asGeneratorGroup
+  , asGitBundle
+  , asGitBundleRef
+  , asGitCommit
+  , asGitPushResult
   , asGitRef
+  , asGitRemote
   , asGitRepository
+  , asHTTPState
   , asHealthcheckConfig
   , asHost
+  , asIdentifier
+  , asIdentifierWord
   , asInputTypeDef
   , asInterfaceTypeDef
   , asJSONValue
   , asLLM
+  , asLLMContent
+  , asLLMContentBlock
+  , asLLMMessage
+  , asLLMMessageOrigin
+  , asLLMSkill
   , asLLMTokenUsage
   , asLabel
   , asListTypeDef
   , asModule
   , asModuleConfigClient
   , asModuleSource
+  , asNamingTerm
   , asObjectTypeDef
   , asPort
   , asQuery
+  , asRemoteGitMirror
   , asSDKConfig
   , asScalarTypeDef
+  , asSchema
   , asSearchResult
   , asSearchSubmatch
   , asSecret
@@ -59,7 +85,15 @@ module Dagger.Node
   , asStat
   , asTerminal
   , asTypeDef
+  , asVolume
   , asWorkspace
+  , asWorkspaceCommitPick
+  , asWorkspaceGit
+  , asWorkspaceMigration
+  , asWorkspaceMigrationStep
+  , asWorkspaceModule
+  , asWorkspaceModuleSetting
+  , asWorkspaceSDK
   ) where
 
 import Effect.Aff (Aff)
@@ -72,8 +106,29 @@ id = R.scalar "id" []
 asAddress :: T.Node -> T.Address
 asAddress = R.fragment "Address"
 
-asBinding :: T.Node -> T.Binding
-asBinding = R.fragment "Binding"
+asAgent :: T.Node -> T.Agent
+asAgent = R.fragment "Agent"
+
+asAgentMessage :: T.Node -> T.AgentMessage
+asAgentMessage = R.fragment "AgentMessage"
+
+asArtifact :: T.Node -> T.Artifact
+asArtifact = R.fragment "Artifact"
+
+asArtifactDimension :: T.Node -> T.ArtifactDimension
+asArtifactDimension = R.fragment "ArtifactDimension"
+
+asArtifactDimensionKey :: T.Node -> T.ArtifactDimensionKey
+asArtifactDimensionKey = R.fragment "ArtifactDimensionKey"
+
+asArtifactPath :: T.Node -> T.ArtifactPath
+asArtifactPath = R.fragment "ArtifactPath"
+
+asArtifactResult :: T.Node -> T.ArtifactResult
+asArtifactResult = R.fragment "ArtifactResult"
+
+asArtifacts :: T.Node -> T.Artifacts
+asArtifacts = R.fragment "Artifacts"
 
 asCacheVolume :: T.Node -> T.CacheVolume
 asCacheVolume = R.fragment "CacheVolume"
@@ -84,17 +139,29 @@ asChangeset = R.fragment "Changeset"
 asCheck :: T.Node -> T.Check
 asCheck = R.fragment "Check"
 
-asCheckGroup :: T.Node -> T.CheckGroup
-asCheckGroup = R.fragment "CheckGroup"
+asClientFilesyncMirror :: T.Node -> T.ClientFilesyncMirror
+asClientFilesyncMirror = R.fragment "ClientFilesyncMirror"
 
 asCloud :: T.Node -> T.Cloud
 asCloud = R.fragment "Cloud"
+
+asCollectionDelta :: T.Node -> T.CollectionDelta
+asCollectionDelta = R.fragment "CollectionDelta"
+
+asCollectionTypeDef :: T.Node -> T.CollectionTypeDef
+asCollectionTypeDef = R.fragment "CollectionTypeDef"
+
+asCommand :: T.Node -> T.Command
+asCommand = R.fragment "Command"
 
 asContainer :: T.Node -> T.Container
 asContainer = R.fragment "Container"
 
 asCurrentModule :: T.Node -> T.CurrentModule
 asCurrentModule = R.fragment "CurrentModule"
+
+asDiffStat :: T.Node -> T.DiffStat
+asDiffStat = R.fragment "DiffStat"
 
 asDirectory :: T.Node -> T.Directory
 asDirectory = R.fragment "Directory"
@@ -117,9 +184,6 @@ asEnumTypeDef = R.fragment "EnumTypeDef"
 asEnumValueTypeDef :: T.Node -> T.EnumValueTypeDef
 asEnumValueTypeDef = R.fragment "EnumValueTypeDef"
 
-asEnv :: T.Node -> T.Env
-asEnv = R.fragment "Env"
-
 asEnvFile :: T.Node -> T.EnvFile
 asEnvFile = R.fragment "EnvFile"
 
@@ -131,6 +195,9 @@ asError = R.fragment "Error"
 
 asErrorValue :: T.Node -> T.ErrorValue
 asErrorValue = R.fragment "ErrorValue"
+
+asExpertise :: T.Node -> T.Expertise
+asExpertise = R.fragment "Expertise"
 
 asFieldTypeDef :: T.Node -> T.FieldTypeDef
 asFieldTypeDef = R.fragment "FieldTypeDef"
@@ -156,20 +223,41 @@ asGeneratedCode = R.fragment "GeneratedCode"
 asGenerator :: T.Node -> T.Generator
 asGenerator = R.fragment "Generator"
 
-asGeneratorGroup :: T.Node -> T.GeneratorGroup
-asGeneratorGroup = R.fragment "GeneratorGroup"
+asGitBundle :: T.Node -> T.GitBundle
+asGitBundle = R.fragment "GitBundle"
+
+asGitBundleRef :: T.Node -> T.GitBundleRef
+asGitBundleRef = R.fragment "GitBundleRef"
+
+asGitCommit :: T.Node -> T.GitCommit
+asGitCommit = R.fragment "GitCommit"
+
+asGitPushResult :: T.Node -> T.GitPushResult
+asGitPushResult = R.fragment "GitPushResult"
 
 asGitRef :: T.Node -> T.GitRef
 asGitRef = R.fragment "GitRef"
 
+asGitRemote :: T.Node -> T.GitRemote
+asGitRemote = R.fragment "GitRemote"
+
 asGitRepository :: T.Node -> T.GitRepository
 asGitRepository = R.fragment "GitRepository"
+
+asHTTPState :: T.Node -> T.HTTPState
+asHTTPState = R.fragment "HTTPState"
 
 asHealthcheckConfig :: T.Node -> T.HealthcheckConfig
 asHealthcheckConfig = R.fragment "HealthcheckConfig"
 
 asHost :: T.Node -> T.Host
 asHost = R.fragment "Host"
+
+asIdentifier :: T.Node -> T.Identifier
+asIdentifier = R.fragment "Identifier"
+
+asIdentifierWord :: T.Node -> T.IdentifierWord
+asIdentifierWord = R.fragment "IdentifierWord"
 
 asInputTypeDef :: T.Node -> T.InputTypeDef
 asInputTypeDef = R.fragment "InputTypeDef"
@@ -182,6 +270,21 @@ asJSONValue = R.fragment "JSONValue"
 
 asLLM :: T.Node -> T.LLM
 asLLM = R.fragment "LLM"
+
+asLLMContent :: T.Node -> T.LLMContent
+asLLMContent = R.fragment "LLMContent"
+
+asLLMContentBlock :: T.Node -> T.LLMContentBlock
+asLLMContentBlock = R.fragment "LLMContentBlock"
+
+asLLMMessage :: T.Node -> T.LLMMessage
+asLLMMessage = R.fragment "LLMMessage"
+
+asLLMMessageOrigin :: T.Node -> T.LLMMessageOrigin
+asLLMMessageOrigin = R.fragment "LLMMessageOrigin"
+
+asLLMSkill :: T.Node -> T.LLMSkill
+asLLMSkill = R.fragment "LLMSkill"
 
 asLLMTokenUsage :: T.Node -> T.LLMTokenUsage
 asLLMTokenUsage = R.fragment "LLMTokenUsage"
@@ -201,6 +304,9 @@ asModuleConfigClient = R.fragment "ModuleConfigClient"
 asModuleSource :: T.Node -> T.ModuleSource
 asModuleSource = R.fragment "ModuleSource"
 
+asNamingTerm :: T.Node -> T.NamingTerm
+asNamingTerm = R.fragment "NamingTerm"
+
 asObjectTypeDef :: T.Node -> T.ObjectTypeDef
 asObjectTypeDef = R.fragment "ObjectTypeDef"
 
@@ -210,11 +316,17 @@ asPort = R.fragment "Port"
 asQuery :: T.Node -> T.Query
 asQuery = R.fragment "Query"
 
+asRemoteGitMirror :: T.Node -> T.RemoteGitMirror
+asRemoteGitMirror = R.fragment "RemoteGitMirror"
+
 asSDKConfig :: T.Node -> T.SDKConfig
 asSDKConfig = R.fragment "SDKConfig"
 
 asScalarTypeDef :: T.Node -> T.ScalarTypeDef
 asScalarTypeDef = R.fragment "ScalarTypeDef"
+
+asSchema :: T.Node -> T.Schema
+asSchema = R.fragment "Schema"
 
 asSearchResult :: T.Node -> T.SearchResult
 asSearchResult = R.fragment "SearchResult"
@@ -243,5 +355,29 @@ asTerminal = R.fragment "Terminal"
 asTypeDef :: T.Node -> T.TypeDef
 asTypeDef = R.fragment "TypeDef"
 
+asVolume :: T.Node -> T.Volume
+asVolume = R.fragment "Volume"
+
 asWorkspace :: T.Node -> T.Workspace
 asWorkspace = R.fragment "Workspace"
+
+asWorkspaceCommitPick :: T.Node -> T.WorkspaceCommitPick
+asWorkspaceCommitPick = R.fragment "WorkspaceCommitPick"
+
+asWorkspaceGit :: T.Node -> T.WorkspaceGit
+asWorkspaceGit = R.fragment "WorkspaceGit"
+
+asWorkspaceMigration :: T.Node -> T.WorkspaceMigration
+asWorkspaceMigration = R.fragment "WorkspaceMigration"
+
+asWorkspaceMigrationStep :: T.Node -> T.WorkspaceMigrationStep
+asWorkspaceMigrationStep = R.fragment "WorkspaceMigrationStep"
+
+asWorkspaceModule :: T.Node -> T.WorkspaceModule
+asWorkspaceModule = R.fragment "WorkspaceModule"
+
+asWorkspaceModuleSetting :: T.Node -> T.WorkspaceModuleSetting
+asWorkspaceModuleSetting = R.fragment "WorkspaceModuleSetting"
+
+asWorkspaceSDK :: T.Node -> T.WorkspaceSDK
+asWorkspaceSDK = R.fragment "WorkspaceSDK"

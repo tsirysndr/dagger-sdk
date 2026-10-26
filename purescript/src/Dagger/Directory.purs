@@ -9,6 +9,10 @@ module Dagger.Directory
   , asModuleSourceWith
   , AsModuleSourceOpts
   , defaultAsModuleSourceOpts
+  , asWorkspace
+  , asWorkspaceWith
+  , AsWorkspaceOpts
+  , defaultAsWorkspaceOpts
   , changes
   , chown
   , diff
@@ -78,7 +82,13 @@ module Dagger.Directory
   , withoutFile
   , withoutFiles
   , withPatch
+  , withPatchWith
+  , WithPatchOpts
+  , defaultWithPatchOpts
   , withPatchFile
+  , withPatchFileWith
+  , WithPatchFileOpts
+  , defaultWithPatchFileOpts
   , withSymlink
   , withTimestamps
   ) where
@@ -126,8 +136,25 @@ asModuleSource = asModuleSourceWith defaultAsModuleSourceOpts
 asModuleSourceWith :: AsModuleSourceOpts -> T.Directory -> T.ModuleSource
 asModuleSourceWith opts = R.select "asModuleSource" [R.optional (R.argument "sourceRootPath" "String") opts.sourceRootPath]
 
+type AsWorkspaceOpts =
+  { cwd :: Maybe String
+  }
+
+defaultAsWorkspaceOpts :: AsWorkspaceOpts
+defaultAsWorkspaceOpts =
+  { cwd: Nothing
+  }
+
+-- | Creates a synthetic workspace from this directory.
+asWorkspace :: T.Directory -> T.Workspace
+asWorkspace = asWorkspaceWith defaultAsWorkspaceOpts
+
+-- | Creates a synthetic workspace from this directory.
+asWorkspaceWith :: AsWorkspaceOpts -> T.Directory -> T.Workspace
+asWorkspaceWith opts = R.select "asWorkspace" [R.optional (R.argument "cwd" "String") opts.cwd]
+
 -- | Return the difference between this directory and another directory, typically an older snapshot.
--- | 
+-- |
 -- | The difference is encoded as a changeset, which also tracks removed files, and can be applied to other directories.
 changes :: T.Directory -> T.Directory -> T.Changeset
 changes argFrom = R.select "changes" [R.objectArgument "from" "ID!" argFrom]
@@ -299,13 +326,13 @@ defaultSearchOpts =
   }
 
 -- | Searches for content matching the given regular expression or literal string.
--- | 
+-- |
 -- | Uses Rust regex syntax; escape literal ., [, ], {, }, | with backslashes.
 search :: String -> T.Directory -> Aff (Array T.SearchResult)
 search argPattern = searchWith argPattern defaultSearchOpts
 
 -- | Searches for content matching the given regular expression or literal string.
--- | 
+-- |
 -- | Uses Rust regex syntax; escape literal ., [, ], {, }, | with backslashes.
 searchWith :: String -> SearchOpts -> T.Directory -> Aff (Array T.SearchResult)
 searchWith argPattern opts = R.objectList "SearchResult" "search" [R.optional (R.argument "paths" "[String!]") opts.paths, R.optional (R.argument "globs" "[String!]") opts.globs, R.argument "pattern" "String!" argPattern, R.optional (R.argument "literal" "Boolean") opts.literal, R.optional (R.argument "multiline" "Boolean") opts.multiline, R.optional (R.argument "dotall" "Boolean") opts.dotall, R.optional (R.argument "insensitive" "Boolean") opts.insensitive, R.optional (R.argument "skipIgnored" "Boolean") opts.skipIgnored, R.optional (R.argument "skipHidden" "Boolean") opts.skipHidden, R.optional (R.argument "filesOnly" "Boolean") opts.filesOnly, R.optional (R.argument "limit" "Int") opts.limit]
@@ -334,6 +361,7 @@ sync = R.scalar "sync" []
 type TerminalOpts =
   { container :: Maybe T.Container
   , cmd :: Maybe (Array String)
+  , disableDaggerInDagger :: Maybe Boolean
   , experimentalPrivilegedNesting :: Maybe Boolean
   , insecureRootCapabilities :: Maybe Boolean
   }
@@ -342,6 +370,7 @@ defaultTerminalOpts :: TerminalOpts
 defaultTerminalOpts =
   { container: Nothing
   , cmd: Nothing
+  , disableDaggerInDagger: Nothing
   , experimentalPrivilegedNesting: Nothing
   , insecureRootCapabilities: Nothing
   }
@@ -352,7 +381,7 @@ terminal = terminalWith defaultTerminalOpts
 
 -- | Opens an interactive terminal in new container with this directory mounted inside.
 terminalWith :: TerminalOpts -> T.Directory -> T.Directory
-terminalWith opts = R.select "terminal" [R.optional (R.objectArgument "container" "ID") opts.container, R.optional (R.argument "cmd" "[String!]") opts.cmd, R.optional (R.argument "experimentalPrivilegedNesting" "Boolean") opts.experimentalPrivilegedNesting, R.optional (R.argument "insecureRootCapabilities" "Boolean") opts.insecureRootCapabilities]
+terminalWith opts = R.select "terminal" [R.optional (R.objectArgument "container" "ID") opts.container, R.optional (R.argument "cmd" "[String!]") opts.cmd, R.optional (R.argument "disableDaggerInDagger" "Boolean") opts.disableDaggerInDagger, R.optional (R.argument "experimentalPrivilegedNesting" "Boolean") opts.experimentalPrivilegedNesting, R.optional (R.argument "insecureRootCapabilities" "Boolean") opts.insecureRootCapabilities]
 
 -- | Return a directory with changes from another directory applied to it.
 withChanges :: T.Changeset -> T.Directory -> T.Directory
@@ -363,6 +392,7 @@ type WithDirectoryOpts =
   , include :: Maybe (Array String)
   , gitignore :: Maybe Boolean
   , owner :: Maybe String
+  , permissions :: Maybe Int
   }
 
 defaultWithDirectoryOpts :: WithDirectoryOpts
@@ -371,6 +401,7 @@ defaultWithDirectoryOpts =
   , include: Nothing
   , gitignore: Nothing
   , owner: Nothing
+  , permissions: Nothing
   }
 
 -- | Return a snapshot with a directory added
@@ -379,7 +410,7 @@ withDirectory argPath argSource = withDirectoryWith argPath argSource defaultWit
 
 -- | Return a snapshot with a directory added
 withDirectoryWith :: String -> T.Directory -> WithDirectoryOpts -> T.Directory -> T.Directory
-withDirectoryWith argPath argSource opts = R.select "withDirectory" [R.argument "path" "String!" argPath, R.objectArgument "source" "ID!" argSource, R.optional (R.argument "exclude" "[String!]") opts.exclude, R.optional (R.argument "include" "[String!]") opts.include, R.optional (R.argument "gitignore" "Boolean") opts.gitignore, R.optional (R.argument "owner" "String") opts.owner]
+withDirectoryWith argPath argSource opts = R.select "withDirectory" [R.argument "path" "String!" argPath, R.objectArgument "source" "ID!" argSource, R.optional (R.argument "exclude" "[String!]") opts.exclude, R.optional (R.argument "include" "[String!]") opts.include, R.optional (R.argument "gitignore" "Boolean") opts.gitignore, R.optional (R.argument "owner" "String") opts.owner, R.optional (R.argument "permissions" "Int") opts.permissions]
 
 -- | Raise an error.
 withError :: String -> T.Directory -> T.Directory
@@ -467,13 +498,39 @@ withoutFile argPath = R.select "withoutFile" [R.argument "path" "String!" argPat
 withoutFiles :: (Array String) -> T.Directory -> T.Directory
 withoutFiles argPaths = R.select "withoutFiles" [R.argument "paths" "[String!]!" argPaths]
 
+type WithPatchOpts =
+  { onConflict :: Maybe T.PatchConflict
+  }
+
+defaultWithPatchOpts :: WithPatchOpts
+defaultWithPatchOpts =
+  { onConflict: Nothing
+  }
+
 -- | Retrieves this directory with the given Git-compatible patch applied.
 withPatch :: String -> T.Directory -> T.Directory
-withPatch argPatch = R.select "withPatch" [R.argument "patch" "String!" argPatch]
+withPatch argPatch = withPatchWith argPatch defaultWithPatchOpts
+
+-- | Retrieves this directory with the given Git-compatible patch applied.
+withPatchWith :: String -> WithPatchOpts -> T.Directory -> T.Directory
+withPatchWith argPatch opts = R.select "withPatch" [R.argument "patch" "String!" argPatch, R.optional (R.argument "onConflict" "PatchConflict") opts.onConflict]
+
+type WithPatchFileOpts =
+  { onConflict :: Maybe T.PatchConflict
+  }
+
+defaultWithPatchFileOpts :: WithPatchFileOpts
+defaultWithPatchFileOpts =
+  { onConflict: Nothing
+  }
 
 -- | Retrieves this directory with the given Git-compatible patch file applied.
 withPatchFile :: T.File -> T.Directory -> T.Directory
-withPatchFile argPatch = R.select "withPatchFile" [R.objectArgument "patch" "ID!" argPatch]
+withPatchFile argPatch = withPatchFileWith argPatch defaultWithPatchFileOpts
+
+-- | Retrieves this directory with the given Git-compatible patch file applied.
+withPatchFileWith :: T.File -> WithPatchFileOpts -> T.Directory -> T.Directory
+withPatchFileWith argPatch opts = R.select "withPatchFile" [R.objectArgument "patch" "ID!" argPatch, R.optional (R.argument "onConflict" "PatchConflict") opts.onConflict]
 
 -- | Return a snapshot with a symlink
 withSymlink :: String -> String -> T.Directory -> T.Directory

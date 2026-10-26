@@ -55,6 +55,8 @@ type PruneOpts =
   , reservedSpace :: Maybe String
   , minFreeSpace :: Maybe String
   , targetSpace :: Maybe String
+  , maxEstimatedBytes :: Maybe Int
+  , targetEstimatedBytes :: Maybe Int
   }
 
 defaultPruneOpts :: PruneOpts
@@ -64,6 +66,8 @@ defaultPruneOpts =
   , reservedSpace: Nothing
   , minFreeSpace: Nothing
   , targetSpace: Nothing
+  , maxEstimatedBytes: Nothing
+  , targetEstimatedBytes: Nothing
   }
 
 -- | Prune the cache of releaseable entries
@@ -72,7 +76,7 @@ prune = pruneWith defaultPruneOpts
 
 -- | Prune the cache of releaseable entries
 pruneWith :: PruneOpts -> T.EngineCache -> Aff (Maybe T.Void)
-pruneWith opts = R.scalar "prune" [R.optional (R.argument "useDefaultPolicy" "Boolean") opts.useDefaultPolicy, R.optional (R.argument "maxUsedSpace" "String") opts.maxUsedSpace, R.optional (R.argument "reservedSpace" "String") opts.reservedSpace, R.optional (R.argument "minFreeSpace" "String") opts.minFreeSpace, R.optional (R.argument "targetSpace" "String") opts.targetSpace]
+pruneWith opts = R.scalar "prune" [R.optional (R.argument "useDefaultPolicy" "Boolean") opts.useDefaultPolicy, R.optional (R.argument "maxUsedSpace" "String") opts.maxUsedSpace, R.optional (R.argument "reservedSpace" "String") opts.reservedSpace, R.optional (R.argument "minFreeSpace" "String") opts.minFreeSpace, R.optional (R.argument "targetSpace" "String") opts.targetSpace, R.optional (R.argument "maxEstimatedBytes" "Int") opts.maxEstimatedBytes, R.optional (R.argument "targetEstimatedBytes" "Int") opts.targetEstimatedBytes]
 
 -- | The minimum amount of disk space this policy is guaranteed to retain.
 reservedSpace :: T.EngineCache -> Aff Int

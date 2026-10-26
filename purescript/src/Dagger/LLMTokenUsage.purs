@@ -12,9 +12,11 @@ import Effect.Aff (Aff)
 import Dagger.Internal.Runtime as R
 import Dagger.Types as T
 
+-- | Input tokens served from the provider's prompt cache.
 cachedTokenReads :: T.LLMTokenUsage -> Aff Int
 cachedTokenReads = R.scalar "cachedTokenReads" []
 
+-- | Input tokens written to the provider's prompt cache.
 cachedTokenWrites :: T.LLMTokenUsage -> Aff Int
 cachedTokenWrites = R.scalar "cachedTokenWrites" []
 
@@ -22,11 +24,14 @@ cachedTokenWrites = R.scalar "cachedTokenWrites" []
 id :: T.LLMTokenUsage -> Aff T.ID
 id = R.scalar "id" []
 
+-- | Uncached input tokens sent to the model.
 inputTokens :: T.LLMTokenUsage -> Aff Int
 inputTokens = R.scalar "inputTokens" []
 
+-- | Tokens received from the model, including text and tool calls.
 outputTokens :: T.LLMTokenUsage -> Aff Int
 outputTokens = R.scalar "outputTokens" []
 
+-- | Total tokens consumed, as reported by the provider.
 totalTokens :: T.LLMTokenUsage -> Aff Int
 totalTokens = R.scalar "totalTokens" []

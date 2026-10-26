@@ -7,6 +7,9 @@ module Dagger.Service
   , hostname
   , id
   , ports
+  , portsWith
+  , PortsOpts
+  , defaultPortsOpts
   , start
   , stop
   , stopWith
@@ -41,17 +44,17 @@ defaultEndpointOpts =
   }
 
 -- | Retrieves an endpoint that clients can use to reach this container.
--- | 
+-- |
 -- | If no port is specified, the first exposed port is used. If none exist an error is returned.
--- | 
+-- |
 -- | If a scheme is specified, a URL is returned. Otherwise, a host:port pair is returned.
 endpoint :: T.Service -> Aff String
 endpoint = endpointWith defaultEndpointOpts
 
 -- | Retrieves an endpoint that clients can use to reach this container.
--- | 
+-- |
 -- | If no port is specified, the first exposed port is used. If none exist an error is returned.
--- | 
+-- |
 -- | If a scheme is specified, a URL is returned. Otherwise, a host:port pair is returned.
 endpointWith :: EndpointOpts -> T.Service -> Aff String
 endpointWith opts = R.scalar "endpoint" [R.optional (R.argument "port" "Int") opts.port, R.optional (R.argument "scheme" "String") opts.scheme]
@@ -64,12 +67,25 @@ hostname = R.scalar "hostname" []
 id :: T.Service -> Aff T.ID
 id = R.scalar "id" []
 
+type PortsOpts =
+  { declared :: Maybe Boolean
+  }
+
+defaultPortsOpts :: PortsOpts
+defaultPortsOpts =
+  { declared: Nothing
+  }
+
 -- | Retrieves the list of ports provided by the service.
 ports :: T.Service -> Aff (Array T.Port)
-ports = R.objectList "Port" "ports" []
+ports = portsWith defaultPortsOpts
+
+-- | Retrieves the list of ports provided by the service.
+portsWith :: PortsOpts -> T.Service -> Aff (Array T.Port)
+portsWith opts = R.objectList "Port" "ports" [R.optional (R.argument "declared" "Boolean") opts.declared]
 
 -- | Start the service and wait for its health checks to succeed.
--- | 
+-- |
 -- | Services bound to a Container do not need to be manually started.
 start :: T.Service -> Aff T.ID
 start = R.scalar "start" []
