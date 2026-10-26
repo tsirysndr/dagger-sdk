@@ -1,0 +1,7 @@
+{
+  "name": "purescript-sdk",
+  "engineVersion": "v0.21.9",
+  "sdk": { "source": "go" },
+  "source": "runtime",
+  "codegen": { "automaticGitignore": false }
+}
