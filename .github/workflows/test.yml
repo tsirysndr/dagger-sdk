@@ -39,6 +39,7 @@ jobs:
           gleam format --check src test runtime/template examples
           gleam test
           python3 -m unittest discover -s codegen -p 'test_*.py'
+          python3 -m unittest discover -s runtime/tests -v
       - name: Check generated bindings
         run: |
           python3 codegen/generate.py codegen/schema.json
@@ -87,6 +88,16 @@ jobs:
         run: |
           mise exec -- clojure -M:test
           mise exec -- clojure -M:generate --check
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: clojure/runtime/go.mod
+          cache-dependency-path: clojure/runtime/go.sum
+      - name: Runtime bootstrap regression tests (no engine)
+        working-directory: clojure/runtime
+        env:
+          DAGGER_SESSION_PORT: '1'
+          DAGGER_SESSION_TOKEN: test
+        run: go test ./...
       - name: Check module example
         working-directory: clojure/examples/module
         run: mise exec -- clojure -M -e "(require 'dagger-main)"
