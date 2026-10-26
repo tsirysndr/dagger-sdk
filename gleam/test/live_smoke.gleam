@@ -1,4 +1,4 @@
-//// Run explicitly with: dagger run -- gleam run -m live_smoke
+//// Run explicitly with: dagger api with-session -- gleam run -m live_smoke
 
 import dagger
 import dagger/client
