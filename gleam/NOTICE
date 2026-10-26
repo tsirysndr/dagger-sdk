@@ -1,0 +1,11 @@
+The SDK implementation is licensed under MIT (see LICENSE).
+
+codegen/schema.json and the schema-derived API documentation originate from
+Dagger (https://github.com/dagger/dagger), licensed under Apache-2.0.
+The upstream license is preserved in codegen/UPSTREAM_LICENSE.
+
+Snapshot source: cmd/codegen/introspection/testdata/schema.json
+Upstream checkout commit: 366d6dd0f9ca9b6ebb9196049eb19c01e31dacf4
+The snapshot is a code-generation fixture, not a guarantee of compatibility
+with a particular released engine. Module builds regenerate against their
+engine's supplied introspection schema.
