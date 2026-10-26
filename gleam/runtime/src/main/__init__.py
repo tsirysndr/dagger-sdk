@@ -5,30 +5,24 @@ registration, argument decoding, and invocation run in Gleam on Erlang.
 """
 from pathlib import PurePosixPath
 import re
+import json
+import posixpath
 import tomllib
-from typing import Annotated
 
 import dagger
-from dagger import DefaultPath, Ignore, dag, field, function, object_type
+from dagger import dag, function, object_type
 
 
 @object_type
 class GleamSdk:
-    sdk_source: dagger.Directory = field()
-
-    def __init__(
-        self,
-        sdk_source: Annotated[
-            dagger.Directory,
-            DefaultPath(".."),
-            Ignore(["build", "runtime/sdk", "runtime/.venv", "**/__pycache__"]),
-        ],
-    ):
-        self.sdk_source = sdk_source
+    async def _source(self) -> dagger.Directory:
+        subpath = await dag.current_module().source_subpath()
+        return dag.current_module().context_directory().directory(posixpath.dirname(subpath) or ".")
 
     async def _common(
-        self, mod_source: dagger.ModuleSource, introspection_json: dagger.File
+        self, mod_source: dagger.ModuleSource, introspection_json: dagger.File | None
     ) -> tuple[dagger.Container, str, str]:
+        sdk_source = await self._source()
         name = await mod_source.module_name()
         subpath = await mod_source.source_subpath()
         # Both paths are engine-provided, but ensure neither escapes /src.
@@ -49,13 +43,17 @@ class GleamSdk:
             .with_exec(["sh", "-c", "if ! command -v python3 >/dev/null; then if command -v apk >/dev/null; then apk add --no-cache python3; else apt-get update && apt-get install -y --no-install-recommends python3 ca-certificates; fi; fi"])
             .with_directory("/src", mod_source.context_directory())
             .with_workdir(workdir)
-            .with_directory("dagger_sdk", self.sdk_source, exclude=["build", "test", "examples", "runtime"])
+        )
+        if introspection_json is None:
+            return base, subpath, workdir
+        base = (base
+            .with_directory("dagger_sdk", sdk_source, exclude=["build", "test", "examples", "runtime"])
             .with_file("/schema.json", introspection_json)
             .with_exec(["python3", "dagger_sdk/codegen/generate.py", "/schema.json", "--output", "dagger_sdk/src/dagger"])
         )
         entries = await base.directory(".").entries()
         if "gleam.toml" not in entries:
-            template = self.sdk_source.directory("runtime/template")
+            template = sdk_source.directory("runtime/template")
             config = (await template.file("gleam.toml").contents()).replace("__PACKAGE__", package)
             source = (await template.file("main.gleam").contents()).replace("__OBJECT__", object_name)
             base = base.with_new_file("gleam.toml", config).with_new_file("src/dagger_main.gleam", source)
@@ -81,17 +79,16 @@ class GleamSdk:
     async def codegen(
         self, mod_source: dagger.ModuleSource, introspection_json: dagger.File
     ) -> dagger.GeneratedCode:
-        container, subpath, _ = await self._common(mod_source, introspection_json)
-        prefix = f"{subpath.rstrip('/')}/" if subpath and subpath != "." else ""
+        container, _, _ = await self._common(mod_source, introspection_json)
         return (
             dag.generated_code(container.directory("/src"))
-            .with_vcs_generated_paths([prefix + "dagger_sdk/**", prefix + "dagger_sdk_entrypoint.sh"])
-            .with_vcs_ignored_paths([prefix + "dagger_sdk", prefix + "dagger_sdk_entrypoint.sh", prefix + "build", prefix + "erl_crash.dump"])
+            .with_vcs_generated_paths(["dagger_sdk/**", "dagger_sdk_entrypoint.sh"])
+            .with_vcs_ignored_paths(["build", "erl_crash.dump"])
         )
 
     @function
     async def module_runtime(
-        self, mod_source: dagger.ModuleSource, introspection_json: dagger.File
+        self, mod_source: dagger.ModuleSource, introspection_json: dagger.File | None = None
     ) -> dagger.Container:
         container, _, workdir = await self._common(mod_source, introspection_json)
         return (
@@ -101,3 +98,30 @@ class GleamSdk:
             .with_exec(["gleam", "export", "erlang-shipment"])
             .with_entrypoint(["sh", f"{workdir}/dagger_sdk_entrypoint.sh"])
         )
+
+    @function
+    async def find_client_root(self, ws: dagger.Workspace) -> str | None:
+        """Find the nearest Gleam package in this workspace."""
+        marker = await ws.find_up("gleam.toml")
+        return (posixpath.dirname(marker).lstrip("/") or ".") if marker else None
+
+    @function
+    async def generate_scope(
+        self, ws: dagger.Workspace, is_module: bool, name: str,
+        clients: list[dagger.ModuleSource],
+    ) -> dagger.Workspace:
+        """Generate module configuration and dependency bindings ahead of execution."""
+        if not is_module:
+            raise ValueError("Standalone scopes are not supported yet; use a Gleam module scope")
+        cwd = await ws.cwd()
+        ref = await ws.sdk("gleam").ref()
+        if ref.startswith((".", "/")) or not any(c in ref.split("/")[0] for c in ".:@"):
+            ref = posixpath.relpath("/" + ref.lstrip("/"), "/" + cwd.lstrip("/"))
+        if not await ws.directory(".").exists("dagger-module.toml"):
+            manifest = (f"name = {json.dumps(name)}\n"
+                        'engineVersion = "v1.0.0-beta.21"\n'
+                        f"[runtime]\nsource = {json.dumps(ref)}\n")
+            ws = ws.with_new_file("dagger-module.toml", manifest)
+        source = ws.module_source("/" + cwd.lstrip("/")).with_name(name).with_sdk(ref).with_dependencies(clients)
+        root = await source.source_root_subpath()
+        return ws.with_directory(".", source.generated_context_directory().directory(root))

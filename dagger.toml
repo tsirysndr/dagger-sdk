@@ -1,0 +1,18 @@
+# Dagger workspace configuration
+# Install modules with: dagger module install <module>
+# Example:
+#   dagger module install dagger.io/linux/wolfi
+
+[modules]
+
+[modules.gleam]
+source = "gleam"
+
+[sdks.gleam]
+module = "gleam"
+
+[modules.purescript]
+source = "purescript"
+
+[sdks.purescript]
+module = "purescript"
