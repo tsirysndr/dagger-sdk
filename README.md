@@ -1,5 +1,7 @@
 # Personal Dagger SDK experiments
 
+[![SDK tests](https://github.com/tsirysndr/dagger-sdk/actions/workflows/test.yml/badge.svg)](https://github.com/tsirysndr/dagger-sdk/actions/workflows/test.yml)
+
 Targets **Dagger v1.0.0-beta.21**. Use the matching CLI and engine.
 
 My experimental [Dagger](https://dagger.io) SDKs for **Gleam**, **PureScript**, and **Clojure**.
