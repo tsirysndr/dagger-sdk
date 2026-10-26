@@ -29,6 +29,26 @@ pub fn codec() -> codec.Codec(types.CurrentModule) {
   )
 }
 
+/// A unique identifier for this CurrentModule.
+pub fn id(self: types.CurrentModule) -> Result(types.Id, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "id", arguments)
+
+  query.execute(selection, types.decode_id())
+}
+
+/// The module's context directory loaded into the engine (plus any generated code that may have been created).
+///
+/// It holds the module's source code and every other file the engine loaded for the module, at their paths relative to the context root. Use sourceSubpath to locate the source code in it.
+pub fn context_directory(self: types.CurrentModule) -> types.Directory {
+  let arguments = []
+
+  let selection = query.select(self.selection, "contextDirectory", arguments)
+
+  types.Directory(selection)
+}
+
 /// The dependencies of the module.
 pub fn dependencies(
   self: types.CurrentModule,
@@ -60,50 +80,6 @@ pub fn generated_context_directory(
   types.Directory(selection)
 }
 
-pub type GeneratorsOption {
-  /// Only include generators matching the specified patterns
-  GeneratorsInclude(List(String))
-}
-
-/// Return all generators defined by the module
-pub fn generators(self: types.CurrentModule) -> types.GeneratorGroup {
-  generators_with(self, [])
-}
-
-/// Return all generators defined by the module
-pub fn generators_with(
-  self: types.CurrentModule,
-  options: List(GeneratorsOption),
-) -> types.GeneratorGroup {
-  let arguments = []
-
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          GeneratorsInclude(value) -> #(
-            "include",
-            query.List(list.map(value, fn(item) { query.String(item) })),
-          )
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "generators", arguments)
-
-  types.GeneratorGroup(selection)
-}
-
-/// A unique identifier for this CurrentModule.
-pub fn id(self: types.CurrentModule) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
-}
-
 /// The name of the module being executed in
 pub fn name(self: types.CurrentModule) -> Result(String, DaggerError) {
   let arguments = []
@@ -120,6 +96,17 @@ pub fn source(self: types.CurrentModule) -> types.Directory {
   let selection = query.select(self.selection, "source", arguments)
 
   types.Directory(selection)
+}
+
+/// The path to the directory containing the module's source code, relative to the context directory.
+pub fn source_subpath(
+  self: types.CurrentModule,
+) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "sourceSubpath", arguments)
+
+  query.execute(selection, decode.string)
 }
 
 pub type WorkdirOption {

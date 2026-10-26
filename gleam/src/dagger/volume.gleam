@@ -6,35 +6,27 @@ import dagger/types
 
 import dagger/errors.{type Error as DaggerError}
 
-pub type Sub2 =
-  types.Sub2
+pub type Volume =
+  types.Volume
 
 /// Load an object by ID without executing a request.
-pub fn from_id(client: types.Query, id: types.Id) -> types.Sub2 {
-  types.Sub2(query.load(client.selection, "Sub2", id.value))
+pub fn from_id(client: types.Query, id: types.Id) -> types.Volume {
+  types.Volume(query.load(client.selection, "Volume", id.value))
 }
 
 import dagger/mod/codec
 
 /// Codec for passing this engine object to or from a Gleam Dagger module.
-pub fn codec() -> codec.Codec(types.Sub2) {
+pub fn codec() -> codec.Codec(types.Volume) {
   codec.engine_object(
-    "Sub2",
+    "Volume",
     fn(client, id) { from_id(client, types.Id(id)) },
     fn(object) { object.selection },
   )
 }
 
-pub fn fn_(self: types.Sub2, s: String) -> types.Sub2Obj {
-  let arguments = [#("s", query.String(s))]
-
-  let selection = query.select(self.selection, "fn", arguments)
-
-  types.Sub2Obj(selection)
-}
-
-/// A unique identifier for this Sub2.
-pub fn id(self: types.Sub2) -> Result(types.Id, DaggerError) {
+/// A unique identifier for this Volume.
+pub fn id(self: types.Volume) -> Result(types.Id, DaggerError) {
   let arguments = []
 
   let selection = query.select(self.selection, "id", arguments)

@@ -27,15 +27,6 @@ pub fn codec() -> codec.Codec(types.Engine) {
   )
 }
 
-/// The list of connected client IDs
-pub fn clients(self: types.Engine) -> Result(List(String), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "clients", arguments)
-
-  query.execute(selection, decode.list(decode.string))
-}
-
 /// A unique identifier for this Engine.
 pub fn id(self: types.Engine) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -45,13 +36,13 @@ pub fn id(self: types.Engine) -> Result(types.Id, DaggerError) {
   query.execute(selection, types.decode_id())
 }
 
-/// The local (on-disk) cache for the Dagger engine
-pub fn local_cache(self: types.Engine) -> types.EngineCache {
+/// The list of connected client IDs
+pub fn clients(self: types.Engine) -> Result(List(String), DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "localCache", arguments)
+  let selection = query.select(self.selection, "clients", arguments)
 
-  types.EngineCache(selection)
+  query.execute(selection, decode.list(decode.string))
 }
 
 /// The name of the engine instance.
@@ -61,4 +52,13 @@ pub fn name(self: types.Engine) -> Result(String, DaggerError) {
   let selection = query.select(self.selection, "name", arguments)
 
   query.execute(selection, decode.string)
+}
+
+/// The local engine cache state tracked by dagql
+pub fn local_cache(self: types.Engine) -> types.EngineCache {
+  let arguments = []
+
+  let selection = query.select(self.selection, "localCache", arguments)
+
+  types.EngineCache(selection)
 }

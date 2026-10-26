@@ -29,54 +29,27 @@ pub fn codec() -> codec.Codec(types.File) {
   )
 }
 
-pub type AsEnvFileOption {
-  /// Replace "${VAR}" or "$VAR" with the value of other vars
-  AsEnvFileExpand(Bool)
-}
-
-/// Parse as an env file
-pub fn as_env_file(self: types.File) -> types.EnvFile {
-  as_env_file_with(self, [])
-}
-
-/// Parse as an env file
-pub fn as_env_file_with(
-  self: types.File,
-  options: List(AsEnvFileOption),
-) -> types.EnvFile {
+/// A unique identifier for this File.
+pub fn id(self: types.File) -> Result(types.Id, DaggerError) {
   let arguments = []
 
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          AsEnvFileExpand(value) -> #("expand", query.Boolean(value))
-        }
-      }),
-    )
+  let selection = query.select(self.selection, "id", arguments)
 
-  let selection = query.select(self.selection, "asEnvFile", arguments)
-
-  types.EnvFile(selection)
+  query.execute(selection, types.decode_id())
 }
 
-/// Parse the file contents as JSON.
-pub fn as_json(self: types.File) -> types.JsonValue {
+/// Force evaluation in the engine.
+pub fn sync(self: types.File) -> Result(types.File, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "asJSON", arguments)
+  let selection = query.select(self.selection, "sync", arguments)
 
-  types.JsonValue(selection)
-}
-
-/// Change the owner of the file recursively.
-pub fn chown(self: types.File, owner: String) -> types.File {
-  let arguments = [#("owner", query.String(owner))]
-
-  let selection = query.select(self.selection, "chown", arguments)
-
-  types.File(selection)
+  query.execute(
+    selection,
+    decode.map(decode.string, fn(id) {
+      types.File(query.load(selection, "File", id))
+    }),
+  )
 }
 
 pub type ContentsOption {
@@ -115,6 +88,33 @@ pub fn contents_with(
   query.execute(selection, decode.string)
 }
 
+/// Retrieves the size of the file, in bytes.
+pub fn size(self: types.File) -> Result(Int, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "size", arguments)
+
+  query.execute(selection, decode.int)
+}
+
+/// Retrieves the name of the file.
+pub fn name(self: types.File) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "name", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// Return file status
+pub fn stat(self: types.File) -> types.Stat {
+  let arguments = []
+
+  let selection = query.select(self.selection, "stat", arguments)
+
+  types.Stat(selection)
+}
+
 pub type DigestOption {
   /// If true, exclude metadata from the digest.
   DigestExcludeMetadata(Bool)
@@ -150,58 +150,13 @@ pub fn digest_with(
   query.execute(selection, decode.string)
 }
 
-pub type ExportOption {
-  /// If allowParentDirPath is true, the path argument can be a directory path, in which case the file will be created in that directory.
-  ExportAllowParentDirPath(Bool)
-}
+/// Retrieves this file with its name set to the given name.
+pub fn with_name(self: types.File, name: String) -> types.File {
+  let arguments = [#("name", query.String(name))]
 
-/// Writes the file to a file path on the host.
-pub fn export(self: types.File, path: String) -> Result(String, DaggerError) {
-  export_with(self, path, [])
-}
+  let selection = query.select(self.selection, "withName", arguments)
 
-/// Writes the file to a file path on the host.
-pub fn export_with(
-  self: types.File,
-  path: String,
-  options: List(ExportOption),
-) -> Result(String, DaggerError) {
-  let arguments = [#("path", query.String(path))]
-
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          ExportAllowParentDirPath(value) -> #(
-            "allowParentDirPath",
-            query.Boolean(value),
-          )
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "export", arguments)
-
-  query.execute(selection, decode.string)
-}
-
-/// A unique identifier for this File.
-pub fn id(self: types.File) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
-}
-
-/// Retrieves the name of the file.
-pub fn name(self: types.File) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "name", arguments)
-
-  query.execute(selection, decode.string)
+  types.File(selection)
 }
 
 pub type SearchOption {
@@ -226,7 +181,7 @@ pub type SearchOption {
 }
 
 /// Searches for content matching the given regular expression or literal string.
-/// 
+///
 /// Uses Rust regex syntax; escape literal ., [, ], {, }, | with backslashes.
 pub fn search(
   self: types.File,
@@ -236,7 +191,7 @@ pub fn search(
 }
 
 /// Searches for content matching the given regular expression or literal string.
-/// 
+///
 /// Uses Rust regex syntax; escape literal ., [, ], {, }, | with backslashes.
 pub fn search_with(
   self: types.File,
@@ -292,47 +247,6 @@ pub fn search_with(
   )
 }
 
-/// Retrieves the size of the file, in bytes.
-pub fn size(self: types.File) -> Result(Int, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "size", arguments)
-
-  query.execute(selection, decode.int)
-}
-
-/// Return file status
-pub fn stat(self: types.File) -> types.Stat {
-  let arguments = []
-
-  let selection = query.select(self.selection, "stat", arguments)
-
-  types.Stat(selection)
-}
-
-/// Force evaluation in the engine.
-pub fn sync(self: types.File) -> Result(types.File, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "sync", arguments)
-
-  query.execute(
-    selection,
-    decode.map(decode.string, fn(id) {
-      types.File(query.load(selection, "File", id))
-    }),
-  )
-}
-
-/// Retrieves this file with its name set to the given name.
-pub fn with_name(self: types.File, name: String) -> types.File {
-  let arguments = [#("name", query.String(name))]
-
-  let selection = query.select(self.selection, "withName", arguments)
-
-  types.File(selection)
-}
-
 pub type WithReplacedOption {
   /// Replace all occurrences of the pattern.
   WithReplacedAll(Bool)
@@ -341,13 +255,13 @@ pub type WithReplacedOption {
 }
 
 /// Retrieves the file with content replaced with the given text.
-/// 
+///
 /// If 'all' is true, all occurrences of the pattern will be replaced.
-/// 
+///
 /// If 'firstAfter' is specified, only the first match starting at the specified line will be replaced.
-/// 
+///
 /// If neither are specified, and there are multiple matches for the pattern, this will error.
-/// 
+///
 /// If there are no matches for the pattern, this will error.
 pub fn with_replaced(
   self: types.File,
@@ -358,13 +272,13 @@ pub fn with_replaced(
 }
 
 /// Retrieves the file with content replaced with the given text.
-/// 
+///
 /// If 'all' is true, all occurrences of the pattern will be replaced.
-/// 
+///
 /// If 'firstAfter' is specified, only the first match starting at the specified line will be replaced.
-/// 
+///
 /// If neither are specified, and there are multiple matches for the pattern, this will error.
-/// 
+///
 /// If there are no matches for the pattern, this will error.
 pub fn with_replaced_with(
   self: types.File,
@@ -394,6 +308,42 @@ pub fn with_replaced_with(
   types.File(selection)
 }
 
+pub type ExportOption {
+  /// If allowParentDirPath is true, the path argument can be a directory path, in which case the file will be created in that directory.
+  ExportAllowParentDirPath(Bool)
+}
+
+/// Writes the file to a file path on the host.
+pub fn export(self: types.File, path: String) -> Result(String, DaggerError) {
+  export_with(self, path, [])
+}
+
+/// Writes the file to a file path on the host.
+pub fn export_with(
+  self: types.File,
+  path: String,
+  options: List(ExportOption),
+) -> Result(String, DaggerError) {
+  let arguments = [#("path", query.String(path))]
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          ExportAllowParentDirPath(value) -> #(
+            "allowParentDirPath",
+            query.Boolean(value),
+          )
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "export", arguments)
+
+  query.execute(selection, decode.string)
+}
+
 /// Retrieves this file with its created/modified timestamps set to the given time.
 pub fn with_timestamps(self: types.File, timestamp: Int) -> types.File {
   let arguments = [#("timestamp", query.Int(timestamp))]
@@ -401,4 +351,63 @@ pub fn with_timestamps(self: types.File, timestamp: Int) -> types.File {
   let selection = query.select(self.selection, "withTimestamps", arguments)
 
   types.File(selection)
+}
+
+/// Change the owner of the file recursively.
+pub fn chown(self: types.File, owner: String) -> types.File {
+  let arguments = [#("owner", query.String(owner))]
+
+  let selection = query.select(self.selection, "chown", arguments)
+
+  types.File(selection)
+}
+
+/// Interpret this file as a Git bundle by lazily parsing its header.
+pub fn as_git_bundle(self: types.File) -> types.GitBundle {
+  let arguments = []
+
+  let selection = query.select(self.selection, "asGitBundle", arguments)
+
+  types.GitBundle(selection)
+}
+
+/// Parse the file contents as JSON.
+pub fn as_json(self: types.File) -> types.JsonValue {
+  let arguments = []
+
+  let selection = query.select(self.selection, "asJSON", arguments)
+
+  types.JsonValue(selection)
+}
+
+pub type AsEnvFileOption {
+  /// Replace "${VAR}" or "$VAR" with the value of other vars
+  AsEnvFileExpand(Bool)
+}
+
+/// Parse as an env file
+pub fn as_env_file(self: types.File) -> types.EnvFile {
+  as_env_file_with(self, [])
+}
+
+/// Parse as an env file
+pub fn as_env_file_with(
+  self: types.File,
+  options: List(AsEnvFileOption),
+) -> types.EnvFile {
+  let arguments = []
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          AsEnvFileExpand(value) -> #("expand", query.Boolean(value))
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "asEnvFile", arguments)
+
+  types.EnvFile(selection)
 }

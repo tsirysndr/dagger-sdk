@@ -31,7 +31,7 @@ def named(ref):
     return ref
 
 def docs(text):
-    return '\n'.join('/// ' + line for line in (text or '').splitlines()) + '\n' if text else ''
+    return '\n'.join(('/// ' + line).rstrip() for line in (text or '').splitlines()) + '\n' if text else ''
 
 def expected(arg):
     for d in arg.get('directives', []):

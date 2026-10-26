@@ -31,15 +31,13 @@ pub fn codec() -> codec.Codec(types.InterfaceTypeDef) {
   )
 }
 
-/// The doc string for the interface, if any.
-pub fn description(
-  self: types.InterfaceTypeDef,
-) -> Result(String, DaggerError) {
+/// A unique identifier for this InterfaceTypeDef.
+pub fn id(self: types.InterfaceTypeDef) -> Result(types.Id, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "description", arguments)
+  let selection = query.select(self.selection, "id", arguments)
 
-  query.execute(selection, decode.string)
+  query.execute(selection, types.decode_id())
 }
 
 /// Functions defined on this interface, if any.
@@ -61,20 +59,22 @@ pub fn functions(
   )
 }
 
-/// A unique identifier for this InterfaceTypeDef.
-pub fn id(self: types.InterfaceTypeDef) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
-}
-
 /// The name of the interface.
 pub fn name(self: types.InterfaceTypeDef) -> Result(String, DaggerError) {
   let arguments = []
 
   let selection = query.select(self.selection, "name", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// The doc string for the interface, if any.
+pub fn description(
+  self: types.InterfaceTypeDef,
+) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "description", arguments)
 
   query.execute(selection, decode.string)
 }

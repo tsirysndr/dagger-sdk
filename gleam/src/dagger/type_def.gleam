@@ -29,60 +29,6 @@ pub fn codec() -> codec.Codec(types.TypeDef) {
   )
 }
 
-/// If kind is ENUM, the enum-specific type definition. If kind is not ENUM, this will be null.
-pub fn as_enum(self: types.TypeDef) -> types.EnumTypeDef {
-  let arguments = []
-
-  let selection = query.select(self.selection, "asEnum", arguments)
-
-  types.EnumTypeDef(selection)
-}
-
-/// If kind is INPUT, the input-specific type definition. If kind is not INPUT, this will be null.
-pub fn as_input(self: types.TypeDef) -> types.InputTypeDef {
-  let arguments = []
-
-  let selection = query.select(self.selection, "asInput", arguments)
-
-  types.InputTypeDef(selection)
-}
-
-/// If kind is INTERFACE, the interface-specific type definition. If kind is not INTERFACE, this will be null.
-pub fn as_interface(self: types.TypeDef) -> types.InterfaceTypeDef {
-  let arguments = []
-
-  let selection = query.select(self.selection, "asInterface", arguments)
-
-  types.InterfaceTypeDef(selection)
-}
-
-/// If kind is LIST, the list-specific type definition. If kind is not LIST, this will be null.
-pub fn as_list(self: types.TypeDef) -> types.ListTypeDef {
-  let arguments = []
-
-  let selection = query.select(self.selection, "asList", arguments)
-
-  types.ListTypeDef(selection)
-}
-
-/// If kind is OBJECT, the object-specific type definition. If kind is not OBJECT, this will be null.
-pub fn as_object(self: types.TypeDef) -> types.ObjectTypeDef {
-  let arguments = []
-
-  let selection = query.select(self.selection, "asObject", arguments)
-
-  types.ObjectTypeDef(selection)
-}
-
-/// If kind is SCALAR, the scalar-specific type definition. If kind is not SCALAR, this will be null.
-pub fn as_scalar(self: types.TypeDef) -> types.ScalarTypeDef {
-  let arguments = []
-
-  let selection = query.select(self.selection, "asScalar", arguments)
-
-  types.ScalarTypeDef(selection)
-}
-
 /// A unique identifier for this TypeDef.
 pub fn id(self: types.TypeDef) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -90,6 +36,66 @@ pub fn id(self: types.TypeDef) -> Result(types.Id, DaggerError) {
   let selection = query.select(self.selection, "id", arguments)
 
   query.execute(selection, types.decode_id())
+}
+
+/// Mark this object as a collection.
+pub fn with_collection(self: types.TypeDef) -> types.TypeDef {
+  let arguments = []
+
+  let selection = query.select(self.selection, "withCollection", arguments)
+
+  types.TypeDef(selection)
+}
+
+/// Select the stored keys field for this collection.
+pub fn with_collection_keys(
+  self: types.TypeDef,
+  name: String,
+) -> types.TypeDef {
+  let arguments = [#("name", query.String(name))]
+
+  let selection = query.select(self.selection, "withCollectionKeys", arguments)
+
+  types.TypeDef(selection)
+}
+
+/// Select the item lookup function for this collection.
+pub fn with_collection_get(self: types.TypeDef, name: String) -> types.TypeDef {
+  let arguments = [#("name", query.String(name))]
+
+  let selection = query.select(self.selection, "withCollectionGet", arguments)
+
+  types.TypeDef(selection)
+}
+
+/// Select the field that receives changes from the original collection.
+pub fn with_collection_delta(
+  self: types.TypeDef,
+  name: String,
+) -> types.TypeDef {
+  let arguments = [#("name", query.String(name))]
+
+  let selection = query.select(self.selection, "withCollectionDelta", arguments)
+
+  types.TypeDef(selection)
+}
+
+/// Collection metadata, or null if this object is not a collection.
+pub fn as_collection(self: types.TypeDef) -> types.CollectionTypeDef {
+  let arguments = []
+
+  let selection = query.select(self.selection, "asCollection", arguments)
+
+  types.CollectionTypeDef(selection)
+}
+
+/// The canonical non-optional name of the type.
+pub fn name(self: types.TypeDef) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "name", arguments)
+
+  query.execute(selection, decode.string)
 }
 
 /// The kind of type this is (e.g. primitive, list, object).
@@ -110,39 +116,41 @@ pub fn optional(self: types.TypeDef) -> Result(Bool, DaggerError) {
   query.execute(selection, decode.bool)
 }
 
-/// Adds a function for constructing a new instance of an Object TypeDef, failing if the type is not an object.
-pub fn with_constructor(
-  self: types.TypeDef,
-  function: types.Function,
-) -> types.TypeDef {
-  let arguments = [#("function", query.Reference(function.selection))]
+/// Sets whether this type can be set to null.
+pub fn with_optional(self: types.TypeDef, optional: Bool) -> types.TypeDef {
+  let arguments = [#("optional", query.Boolean(optional))]
 
-  let selection = query.select(self.selection, "withConstructor", arguments)
+  let selection = query.select(self.selection, "withOptional", arguments)
 
   types.TypeDef(selection)
 }
 
-pub type WithEnumOption {
-  /// A doc string for the enum, if any
-  WithEnumDescription(String)
-  /// The source map for the enum definition.
-  WithEnumSourceMap(types.SourceMap)
+/// Sets the kind of the type.
+pub fn with_kind(
+  self: types.TypeDef,
+  kind: types.TypeDefKind,
+) -> types.TypeDef {
+  let arguments = [#("kind", types.encode_type_def_kind(kind))]
+
+  let selection = query.select(self.selection, "withKind", arguments)
+
+  types.TypeDef(selection)
 }
 
-/// Returns a TypeDef of kind Enum with the provided name.
-/// 
-/// Note that an enum's values may be omitted if the intent is only to refer to an enum. This is how functions are able to return their own, or any other circular reference.
-pub fn with_enum(self: types.TypeDef, name: String) -> types.TypeDef {
-  with_enum_with(self, name, [])
+pub type WithScalarOption {
+  WithScalarDescription(String)
 }
 
-/// Returns a TypeDef of kind Enum with the provided name.
-/// 
-/// Note that an enum's values may be omitted if the intent is only to refer to an enum. This is how functions are able to return their own, or any other circular reference.
-pub fn with_enum_with(
+/// Returns a TypeDef of kind Scalar with the provided name.
+pub fn with_scalar(self: types.TypeDef, name: String) -> types.TypeDef {
+  with_scalar_with(self, name, [])
+}
+
+/// Returns a TypeDef of kind Scalar with the provided name.
+pub fn with_scalar_with(
   self: types.TypeDef,
   name: String,
-  options: List(WithEnumOption),
+  options: List(WithScalarOption),
 ) -> types.TypeDef {
   let arguments = [#("name", query.String(name))]
 
@@ -151,42 +159,48 @@ pub fn with_enum_with(
       arguments,
       list.map(options, fn(option) {
         case option {
-          WithEnumDescription(value) -> #("description", query.String(value))
-
-          WithEnumSourceMap(value) -> #(
-            "sourceMap",
-            query.Reference(value.selection),
-          )
+          WithScalarDescription(value) -> #("description", query.String(value))
         }
       }),
     )
 
-  let selection = query.select(self.selection, "withEnum", arguments)
+  let selection = query.select(self.selection, "withScalar", arguments)
 
   types.TypeDef(selection)
 }
 
-pub type WithEnumMemberOption {
-  /// The value of the member in the enum
-  WithEnumMemberValue(String)
-  /// A doc string for the member, if any
-  WithEnumMemberDescription(String)
-  /// The source map for the enum member definition.
-  WithEnumMemberSourceMap(types.SourceMap)
-  /// If deprecated, the reason or migration path.
-  WithEnumMemberDeprecated(String)
+/// Returns a TypeDef of kind List with the provided type for its elements.
+pub fn with_list_of(
+  self: types.TypeDef,
+  element_type: types.TypeDef,
+) -> types.TypeDef {
+  let arguments = [#("elementType", query.Reference(element_type.selection))]
+
+  let selection = query.select(self.selection, "withListOf", arguments)
+
+  types.TypeDef(selection)
 }
 
-/// Adds a static value for an Enum TypeDef, failing if the type is not an enum.
-pub fn with_enum_member(self: types.TypeDef, name: String) -> types.TypeDef {
-  with_enum_member_with(self, name, [])
+pub type WithObjectOption {
+  WithObjectDescription(String)
+  WithObjectSourceMap(types.SourceMap)
+  WithObjectDeprecated(String)
 }
 
-/// Adds a static value for an Enum TypeDef, failing if the type is not an enum.
-pub fn with_enum_member_with(
+/// Returns a TypeDef of kind Object with the provided name.
+///
+/// Note that an object's fields and functions may be omitted if the intent is only to refer to an object. This is how functions are able to return their own object, or any other circular reference.
+pub fn with_object(self: types.TypeDef, name: String) -> types.TypeDef {
+  with_object_with(self, name, [])
+}
+
+/// Returns a TypeDef of kind Object with the provided name.
+///
+/// Note that an object's fields and functions may be omitted if the intent is only to refer to an object. This is how functions are able to return their own object, or any other circular reference.
+pub fn with_object_with(
   self: types.TypeDef,
   name: String,
-  options: List(WithEnumMemberOption),
+  options: List(WithObjectOption),
 ) -> types.TypeDef {
   let arguments = [#("name", query.String(name))]
 
@@ -195,76 +209,60 @@ pub fn with_enum_member_with(
       arguments,
       list.map(options, fn(option) {
         case option {
-          WithEnumMemberValue(value) -> #("value", query.String(value))
+          WithObjectDescription(value) -> #("description", query.String(value))
 
-          WithEnumMemberDescription(value) -> #(
-            "description",
-            query.String(value),
-          )
-
-          WithEnumMemberSourceMap(value) -> #(
+          WithObjectSourceMap(value) -> #(
             "sourceMap",
             query.Reference(value.selection),
           )
 
-          WithEnumMemberDeprecated(value) -> #(
-            "deprecated",
-            query.String(value),
-          )
+          WithObjectDeprecated(value) -> #("deprecated", query.String(value))
         }
       }),
     )
 
-  let selection = query.select(self.selection, "withEnumMember", arguments)
+  let selection = query.select(self.selection, "withObject", arguments)
 
   types.TypeDef(selection)
 }
 
-pub type WithEnumValueOption {
-  /// A doc string for the value, if any
-  WithEnumValueDescription(String)
-  /// The source map for the enum value definition.
-  WithEnumValueSourceMap(types.SourceMap)
-  /// If deprecated, the reason or migration path.
-  WithEnumValueDeprecated(String)
+pub type WithInterfaceOption {
+  WithInterfaceDescription(String)
+  WithInterfaceSourceMap(types.SourceMap)
 }
 
-/// Adds a static value for an Enum TypeDef, failing if the type is not an enum.
-/// Deprecated: Use `withEnumMember` instead
-pub fn with_enum_value(self: types.TypeDef, value: String) -> types.TypeDef {
-  with_enum_value_with(self, value, [])
+/// Returns a TypeDef of kind Interface with the provided name.
+pub fn with_interface(self: types.TypeDef, name: String) -> types.TypeDef {
+  with_interface_with(self, name, [])
 }
 
-/// Adds a static value for an Enum TypeDef, failing if the type is not an enum.
-/// Deprecated: Use `withEnumMember` instead
-pub fn with_enum_value_with(
+/// Returns a TypeDef of kind Interface with the provided name.
+pub fn with_interface_with(
   self: types.TypeDef,
-  value: String,
-  options: List(WithEnumValueOption),
+  name: String,
+  options: List(WithInterfaceOption),
 ) -> types.TypeDef {
-  let arguments = [#("value", query.String(value))]
+  let arguments = [#("name", query.String(name))]
 
   let arguments =
     list.append(
       arguments,
       list.map(options, fn(option) {
         case option {
-          WithEnumValueDescription(value) -> #(
+          WithInterfaceDescription(value) -> #(
             "description",
             query.String(value),
           )
 
-          WithEnumValueSourceMap(value) -> #(
+          WithInterfaceSourceMap(value) -> #(
             "sourceMap",
             query.Reference(value.selection),
           )
-
-          WithEnumValueDeprecated(value) -> #("deprecated", query.String(value))
         }
       }),
     )
 
-  let selection = query.select(self.selection, "withEnumValue", arguments)
+  let selection = query.select(self.selection, "withInterface", arguments)
 
   types.TypeDef(selection)
 }
@@ -333,21 +331,39 @@ pub fn with_function(
   types.TypeDef(selection)
 }
 
-pub type WithInterfaceOption {
-  WithInterfaceDescription(String)
-  WithInterfaceSourceMap(types.SourceMap)
+/// Adds a function for constructing a new instance of an Object TypeDef, failing if the type is not an object.
+pub fn with_constructor(
+  self: types.TypeDef,
+  function: types.Function,
+) -> types.TypeDef {
+  let arguments = [#("function", query.Reference(function.selection))]
+
+  let selection = query.select(self.selection, "withConstructor", arguments)
+
+  types.TypeDef(selection)
 }
 
-/// Returns a TypeDef of kind Interface with the provided name.
-pub fn with_interface(self: types.TypeDef, name: String) -> types.TypeDef {
-  with_interface_with(self, name, [])
+pub type WithEnumOption {
+  /// A doc string for the enum, if any
+  WithEnumDescription(String)
+  /// The source map for the enum definition.
+  WithEnumSourceMap(types.SourceMap)
 }
 
-/// Returns a TypeDef of kind Interface with the provided name.
-pub fn with_interface_with(
+/// Returns a TypeDef of kind Enum with the provided name.
+///
+/// Note that an enum's values may be omitted if the intent is only to refer to an enum. This is how functions are able to return their own, or any other circular reference.
+pub fn with_enum(self: types.TypeDef, name: String) -> types.TypeDef {
+  with_enum_with(self, name, [])
+}
+
+/// Returns a TypeDef of kind Enum with the provided name.
+///
+/// Note that an enum's values may be omitted if the intent is only to refer to an enum. This is how functions are able to return their own, or any other circular reference.
+pub fn with_enum_with(
   self: types.TypeDef,
   name: String,
-  options: List(WithInterfaceOption),
+  options: List(WithEnumOption),
 ) -> types.TypeDef {
   let arguments = [#("name", query.String(name))]
 
@@ -356,68 +372,91 @@ pub fn with_interface_with(
       arguments,
       list.map(options, fn(option) {
         case option {
-          WithInterfaceDescription(value) -> #(
+          WithEnumDescription(value) -> #("description", query.String(value))
+
+          WithEnumSourceMap(value) -> #(
+            "sourceMap",
+            query.Reference(value.selection),
+          )
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "withEnum", arguments)
+
+  types.TypeDef(selection)
+}
+
+pub type WithEnumValueOption {
+  /// A doc string for the value, if any
+  WithEnumValueDescription(String)
+  /// The source map for the enum value definition.
+  WithEnumValueSourceMap(types.SourceMap)
+  /// If deprecated, the reason or migration path.
+  WithEnumValueDeprecated(String)
+}
+
+/// Adds a static value for an Enum TypeDef, failing if the type is not an enum.
+/// Deprecated: Use `withEnumMember` instead
+pub fn with_enum_value(self: types.TypeDef, value: String) -> types.TypeDef {
+  with_enum_value_with(self, value, [])
+}
+
+/// Adds a static value for an Enum TypeDef, failing if the type is not an enum.
+/// Deprecated: Use `withEnumMember` instead
+pub fn with_enum_value_with(
+  self: types.TypeDef,
+  value: String,
+  options: List(WithEnumValueOption),
+) -> types.TypeDef {
+  let arguments = [#("value", query.String(value))]
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          WithEnumValueDescription(value) -> #(
             "description",
             query.String(value),
           )
 
-          WithInterfaceSourceMap(value) -> #(
+          WithEnumValueSourceMap(value) -> #(
             "sourceMap",
             query.Reference(value.selection),
           )
+
+          WithEnumValueDeprecated(value) -> #("deprecated", query.String(value))
         }
       }),
     )
 
-  let selection = query.select(self.selection, "withInterface", arguments)
+  let selection = query.select(self.selection, "withEnumValue", arguments)
 
   types.TypeDef(selection)
 }
 
-/// Sets the kind of the type.
-pub fn with_kind(
-  self: types.TypeDef,
-  kind: types.TypeDefKind,
-) -> types.TypeDef {
-  let arguments = [#("kind", types.encode_type_def_kind(kind))]
-
-  let selection = query.select(self.selection, "withKind", arguments)
-
-  types.TypeDef(selection)
+pub type WithEnumMemberOption {
+  /// The value of the member in the enum
+  WithEnumMemberValue(String)
+  /// A doc string for the member, if any
+  WithEnumMemberDescription(String)
+  /// The source map for the enum member definition.
+  WithEnumMemberSourceMap(types.SourceMap)
+  /// If deprecated, the reason or migration path.
+  WithEnumMemberDeprecated(String)
 }
 
-/// Returns a TypeDef of kind List with the provided type for its elements.
-pub fn with_list_of(
-  self: types.TypeDef,
-  element_type: types.TypeDef,
-) -> types.TypeDef {
-  let arguments = [#("elementType", query.Reference(element_type.selection))]
-
-  let selection = query.select(self.selection, "withListOf", arguments)
-
-  types.TypeDef(selection)
+/// Adds a static value for an Enum TypeDef, failing if the type is not an enum.
+pub fn with_enum_member(self: types.TypeDef, name: String) -> types.TypeDef {
+  with_enum_member_with(self, name, [])
 }
 
-pub type WithObjectOption {
-  WithObjectDescription(String)
-  WithObjectSourceMap(types.SourceMap)
-  WithObjectDeprecated(String)
-}
-
-/// Returns a TypeDef of kind Object with the provided name.
-/// 
-/// Note that an object's fields and functions may be omitted if the intent is only to refer to an object. This is how functions are able to return their own object, or any other circular reference.
-pub fn with_object(self: types.TypeDef, name: String) -> types.TypeDef {
-  with_object_with(self, name, [])
-}
-
-/// Returns a TypeDef of kind Object with the provided name.
-/// 
-/// Note that an object's fields and functions may be omitted if the intent is only to refer to an object. This is how functions are able to return their own object, or any other circular reference.
-pub fn with_object_with(
+/// Adds a static value for an Enum TypeDef, failing if the type is not an enum.
+pub fn with_enum_member_with(
   self: types.TypeDef,
   name: String,
-  options: List(WithObjectOption),
+  options: List(WithEnumMemberOption),
 ) -> types.TypeDef {
   let arguments = [#("name", query.String(name))]
 
@@ -426,60 +465,81 @@ pub fn with_object_with(
       arguments,
       list.map(options, fn(option) {
         case option {
-          WithObjectDescription(value) -> #("description", query.String(value))
+          WithEnumMemberValue(value) -> #("value", query.String(value))
 
-          WithObjectSourceMap(value) -> #(
+          WithEnumMemberDescription(value) -> #(
+            "description",
+            query.String(value),
+          )
+
+          WithEnumMemberSourceMap(value) -> #(
             "sourceMap",
             query.Reference(value.selection),
           )
 
-          WithObjectDeprecated(value) -> #("deprecated", query.String(value))
+          WithEnumMemberDeprecated(value) -> #(
+            "deprecated",
+            query.String(value),
+          )
         }
       }),
     )
 
-  let selection = query.select(self.selection, "withObject", arguments)
+  let selection = query.select(self.selection, "withEnumMember", arguments)
 
   types.TypeDef(selection)
 }
 
-/// Sets whether this type can be set to null.
-pub fn with_optional(self: types.TypeDef, optional: Bool) -> types.TypeDef {
-  let arguments = [#("optional", query.Boolean(optional))]
+/// If kind is LIST, the list-specific type definition. If kind is not LIST, this will be null.
+pub fn as_list(self: types.TypeDef) -> types.ListTypeDef {
+  let arguments = []
 
-  let selection = query.select(self.selection, "withOptional", arguments)
+  let selection = query.select(self.selection, "asList", arguments)
 
-  types.TypeDef(selection)
+  types.ListTypeDef(selection)
 }
 
-pub type WithScalarOption {
-  WithScalarDescription(String)
+/// If kind is OBJECT, the object-specific type definition. If kind is not OBJECT, this will be null.
+pub fn as_object(self: types.TypeDef) -> types.ObjectTypeDef {
+  let arguments = []
+
+  let selection = query.select(self.selection, "asObject", arguments)
+
+  types.ObjectTypeDef(selection)
 }
 
-/// Returns a TypeDef of kind Scalar with the provided name.
-pub fn with_scalar(self: types.TypeDef, name: String) -> types.TypeDef {
-  with_scalar_with(self, name, [])
+/// If kind is INTERFACE, the interface-specific type definition. If kind is not INTERFACE, this will be null.
+pub fn as_interface(self: types.TypeDef) -> types.InterfaceTypeDef {
+  let arguments = []
+
+  let selection = query.select(self.selection, "asInterface", arguments)
+
+  types.InterfaceTypeDef(selection)
 }
 
-/// Returns a TypeDef of kind Scalar with the provided name.
-pub fn with_scalar_with(
-  self: types.TypeDef,
-  name: String,
-  options: List(WithScalarOption),
-) -> types.TypeDef {
-  let arguments = [#("name", query.String(name))]
+/// If kind is INPUT, the input-specific type definition. If kind is not INPUT, this will be null.
+pub fn as_input(self: types.TypeDef) -> types.InputTypeDef {
+  let arguments = []
 
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          WithScalarDescription(value) -> #("description", query.String(value))
-        }
-      }),
-    )
+  let selection = query.select(self.selection, "asInput", arguments)
 
-  let selection = query.select(self.selection, "withScalar", arguments)
+  types.InputTypeDef(selection)
+}
 
-  types.TypeDef(selection)
+/// If kind is SCALAR, the scalar-specific type definition. If kind is not SCALAR, this will be null.
+pub fn as_scalar(self: types.TypeDef) -> types.ScalarTypeDef {
+  let arguments = []
+
+  let selection = query.select(self.selection, "asScalar", arguments)
+
+  types.ScalarTypeDef(selection)
+}
+
+/// If kind is ENUM, the enum-specific type definition. If kind is not ENUM, this will be null.
+pub fn as_enum(self: types.TypeDef) -> types.EnumTypeDef {
+  let arguments = []
+
+  let selection = query.select(self.selection, "asEnum", arguments)
+
+  types.EnumTypeDef(selection)
 }

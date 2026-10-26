@@ -27,13 +27,13 @@ pub fn codec() -> codec.Codec(types.SearchResult) {
   )
 }
 
-/// The byte offset of this line within the file.
-pub fn absolute_offset(self: types.SearchResult) -> Result(Int, DaggerError) {
+/// A unique identifier for this SearchResult.
+pub fn id(self: types.SearchResult) -> Result(types.Id, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "absoluteOffset", arguments)
+  let selection = query.select(self.selection, "id", arguments)
 
-  query.execute(selection, decode.int)
+  query.execute(selection, types.decode_id())
 }
 
 /// The path to the file that matched.
@@ -45,20 +45,20 @@ pub fn file_path(self: types.SearchResult) -> Result(String, DaggerError) {
   query.execute(selection, decode.string)
 }
 
-/// A unique identifier for this SearchResult.
-pub fn id(self: types.SearchResult) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
-}
-
 /// The first line that matched.
 pub fn line_number(self: types.SearchResult) -> Result(Int, DaggerError) {
   let arguments = []
 
   let selection = query.select(self.selection, "lineNumber", arguments)
+
+  query.execute(selection, decode.int)
+}
+
+/// The byte offset of this line within the file.
+pub fn absolute_offset(self: types.SearchResult) -> Result(Int, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "absoluteOffset", arguments)
 
   query.execute(selection, decode.int)
 }

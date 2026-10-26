@@ -31,6 +31,87 @@ pub fn codec() -> codec.Codec(types.Service) {
   )
 }
 
+/// A unique identifier for this Service.
+pub fn id(self: types.Service) -> Result(types.Id, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "id", arguments)
+
+  query.execute(selection, types.decode_id())
+}
+
+/// Forces evaluation of the pipeline in the engine.
+pub fn sync(self: types.Service) -> Result(types.Service, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "sync", arguments)
+
+  query.execute(
+    selection,
+    decode.map(decode.string, fn(id) {
+      types.Service(query.load(selection, "Service", id))
+    }),
+  )
+}
+
+/// Retrieves a hostname which can be used by clients to reach this container.
+pub fn hostname(self: types.Service) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "hostname", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// Configures a hostname which can be used by clients within the session to reach this container.
+pub fn with_hostname(self: types.Service, hostname: String) -> types.Service {
+  let arguments = [#("hostname", query.String(hostname))]
+
+  let selection = query.select(self.selection, "withHostname", arguments)
+
+  types.Service(selection)
+}
+
+pub type PortsOption {
+  /// Return only container ports declared before startup. Other service types return an empty list.
+  PortsDeclared(Bool)
+}
+
+/// Retrieves the list of ports provided by the service.
+pub fn ports(self: types.Service) -> Result(List(types.Port), DaggerError) {
+  ports_with(self, [])
+}
+
+/// Retrieves the list of ports provided by the service.
+pub fn ports_with(
+  self: types.Service,
+  options: List(PortsOption),
+) -> Result(List(types.Port), DaggerError) {
+  let arguments = []
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          PortsDeclared(value) -> #("declared", query.Boolean(value))
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "ports", arguments)
+
+  query.execute_with_children(
+    selection,
+    "id",
+    decode.list(
+      decode.map(decode.at(["id"], decode.string), fn(id) {
+        types.Port(query.load(selection, "Port", id))
+      }),
+    ),
+  )
+}
+
 pub type EndpointOption {
   /// The exposed port number for the endpoint
   EndpointPort(Int)
@@ -39,18 +120,18 @@ pub type EndpointOption {
 }
 
 /// Retrieves an endpoint that clients can use to reach this container.
-/// 
+///
 /// If no port is specified, the first exposed port is used. If none exist an error is returned.
-/// 
+///
 /// If a scheme is specified, a URL is returned. Otherwise, a host:port pair is returned.
 pub fn endpoint(self: types.Service) -> Result(String, DaggerError) {
   endpoint_with(self, [])
 }
 
 /// Retrieves an endpoint that clients can use to reach this container.
-/// 
+///
 /// If no port is specified, the first exposed port is used. If none exist an error is returned.
-/// 
+///
 /// If a scheme is specified, a URL is returned. Otherwise, a host:port pair is returned.
 pub fn endpoint_with(
   self: types.Service,
@@ -75,43 +156,8 @@ pub fn endpoint_with(
   query.execute(selection, decode.string)
 }
 
-/// Retrieves a hostname which can be used by clients to reach this container.
-pub fn hostname(self: types.Service) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "hostname", arguments)
-
-  query.execute(selection, decode.string)
-}
-
-/// A unique identifier for this Service.
-pub fn id(self: types.Service) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
-}
-
-/// Retrieves the list of ports provided by the service.
-pub fn ports(self: types.Service) -> Result(List(types.Port), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "ports", arguments)
-
-  query.execute_with_children(
-    selection,
-    "id",
-    decode.list(
-      decode.map(decode.at(["id"], decode.string), fn(id) {
-        types.Port(query.load(selection, "Port", id))
-      }),
-    ),
-  )
-}
-
 /// Start the service and wait for its health checks to succeed.
-/// 
+///
 /// Services bound to a Container do not need to be manually started.
 pub fn start(self: types.Service) -> Result(types.Service, DaggerError) {
   let arguments = []
@@ -126,92 +172,9 @@ pub fn start(self: types.Service) -> Result(types.Service, DaggerError) {
   )
 }
 
-pub type StopOption {
-  /// Immediately kill the service without waiting for a graceful exit
-  StopKill(Bool)
-}
-
-/// Stop the service.
-pub fn stop(self: types.Service) -> Result(types.Service, DaggerError) {
-  stop_with(self, [])
-}
-
-/// Stop the service.
-pub fn stop_with(
-  self: types.Service,
-  options: List(StopOption),
-) -> Result(types.Service, DaggerError) {
-  let arguments = []
-
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          StopKill(value) -> #("kill", query.Boolean(value))
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "stop", arguments)
-
-  query.execute(
-    selection,
-    decode.map(decode.string, fn(id) {
-      types.Service(query.load(selection, "Service", id))
-    }),
-  )
-}
-
-/// Forces evaluation of the pipeline in the engine.
-pub fn sync(self: types.Service) -> Result(types.Service, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "sync", arguments)
-
-  query.execute(
-    selection,
-    decode.map(decode.string, fn(id) {
-      types.Service(query.load(selection, "Service", id))
-    }),
-  )
-}
-
-pub type TerminalOption {
-  TerminalCmd(List(String))
-}
-
-pub fn terminal(self: types.Service) -> types.Service {
-  terminal_with(self, [])
-}
-
-pub fn terminal_with(
-  self: types.Service,
-  options: List(TerminalOption),
-) -> types.Service {
-  let arguments = []
-
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          TerminalCmd(value) -> #(
-            "cmd",
-            query.List(list.map(value, fn(item) { query.String(item) })),
-          )
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "terminal", arguments)
-
-  types.Service(selection)
-}
-
 pub type UpOption {
   /// List of frontend/backend port mappings to forward.
-  /// 
+  ///
   /// Frontend is the port accepting traffic on the host, backend is the service port.
   UpPorts(List(types.PortForward))
   /// Bind each tunnel port to a random port on the host.
@@ -255,11 +218,71 @@ pub fn up_with(
   )
 }
 
-/// Configures a hostname which can be used by clients within the session to reach this container.
-pub fn with_hostname(self: types.Service, hostname: String) -> types.Service {
-  let arguments = [#("hostname", query.String(hostname))]
+pub type StopOption {
+  /// Immediately kill the service without waiting for a graceful exit
+  StopKill(Bool)
+}
 
-  let selection = query.select(self.selection, "withHostname", arguments)
+/// Stop the service.
+pub fn stop(self: types.Service) -> Result(types.Service, DaggerError) {
+  stop_with(self, [])
+}
+
+/// Stop the service.
+pub fn stop_with(
+  self: types.Service,
+  options: List(StopOption),
+) -> Result(types.Service, DaggerError) {
+  let arguments = []
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          StopKill(value) -> #("kill", query.Boolean(value))
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "stop", arguments)
+
+  query.execute(
+    selection,
+    decode.map(decode.string, fn(id) {
+      types.Service(query.load(selection, "Service", id))
+    }),
+  )
+}
+
+pub type TerminalOption {
+  TerminalCmd(List(String))
+}
+
+pub fn terminal(self: types.Service) -> types.Service {
+  terminal_with(self, [])
+}
+
+pub fn terminal_with(
+  self: types.Service,
+  options: List(TerminalOption),
+) -> types.Service {
+  let arguments = []
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          TerminalCmd(value) -> #(
+            "cmd",
+            query.List(list.map(value, fn(item) { query.String(item) })),
+          )
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "terminal", arguments)
 
   types.Service(selection)
 }

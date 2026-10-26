@@ -6,35 +6,34 @@ import dagger/types
 
 import dagger/errors.{type Error as DaggerError}
 
-pub type Sub1 =
-  types.Sub1
+pub type ClientFilesyncMirror =
+  types.ClientFilesyncMirror
 
 /// Load an object by ID without executing a request.
-pub fn from_id(client: types.Query, id: types.Id) -> types.Sub1 {
-  types.Sub1(query.load(client.selection, "Sub1", id.value))
+pub fn from_id(
+  client: types.Query,
+  id: types.Id,
+) -> types.ClientFilesyncMirror {
+  types.ClientFilesyncMirror(query.load(
+    client.selection,
+    "ClientFilesyncMirror",
+    id.value,
+  ))
 }
 
 import dagger/mod/codec
 
 /// Codec for passing this engine object to or from a Gleam Dagger module.
-pub fn codec() -> codec.Codec(types.Sub1) {
+pub fn codec() -> codec.Codec(types.ClientFilesyncMirror) {
   codec.engine_object(
-    "Sub1",
+    "ClientFilesyncMirror",
     fn(client, id) { from_id(client, types.Id(id)) },
     fn(object) { object.selection },
   )
 }
 
-pub fn fn_(self: types.Sub1, s: String) -> types.Sub1Obj {
-  let arguments = [#("s", query.String(s))]
-
-  let selection = query.select(self.selection, "fn", arguments)
-
-  types.Sub1Obj(selection)
-}
-
-/// A unique identifier for this Sub1.
-pub fn id(self: types.Sub1) -> Result(types.Id, DaggerError) {
+/// A unique identifier for this ClientFilesyncMirror.
+pub fn id(self: types.ClientFilesyncMirror) -> Result(types.Id, DaggerError) {
   let arguments = []
 
   let selection = query.select(self.selection, "id", arguments)

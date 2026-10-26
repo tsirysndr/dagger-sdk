@@ -29,57 +29,6 @@ pub fn codec() -> codec.Codec(types.EnvFile) {
   )
 }
 
-/// Return as a file
-pub fn as_file(self: types.EnvFile) -> types.File {
-  let arguments = []
-
-  let selection = query.select(self.selection, "asFile", arguments)
-
-  types.File(selection)
-}
-
-/// Check if a variable exists
-pub fn exists(self: types.EnvFile, name: String) -> Result(Bool, DaggerError) {
-  let arguments = [#("name", query.String(name))]
-
-  let selection = query.select(self.selection, "exists", arguments)
-
-  query.execute(selection, decode.bool)
-}
-
-pub type GetOption {
-  /// Return the value exactly as written to the file. No quote removal or variable expansion
-  GetRaw(Bool)
-}
-
-/// Lookup a variable (last occurrence wins) and return its value, or an empty string
-pub fn get(self: types.EnvFile, name: String) -> Result(String, DaggerError) {
-  get_with(self, name, [])
-}
-
-/// Lookup a variable (last occurrence wins) and return its value, or an empty string
-pub fn get_with(
-  self: types.EnvFile,
-  name: String,
-  options: List(GetOption),
-) -> Result(String, DaggerError) {
-  let arguments = [#("name", query.String(name))]
-
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          GetRaw(value) -> #("raw", query.Boolean(value))
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "get", arguments)
-
-  query.execute(selection, decode.string)
-}
-
 /// A unique identifier for this EnvFile.
 pub fn id(self: types.EnvFile) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -87,15 +36,6 @@ pub fn id(self: types.EnvFile) -> Result(types.Id, DaggerError) {
   let selection = query.select(self.selection, "id", arguments)
 
   query.execute(selection, types.decode_id())
-}
-
-/// Filters variables by prefix and removes the pref from keys. Variables without the prefix are excluded. For example, with the prefix "MY_APP_" and variables: MY_APP_TOKEN=topsecret MY_APP_NAME=hello FOO=bar the resulting environment will contain: TOKEN=topsecret NAME=hello
-pub fn namespace(self: types.EnvFile, prefix: String) -> types.EnvFile {
-  let arguments = [#("prefix", query.String(prefix))]
-
-  let selection = query.select(self.selection, "namespace", arguments)
-
-  types.EnvFile(selection)
 }
 
 pub type VariablesOption {
@@ -161,6 +101,66 @@ pub fn without_variable(self: types.EnvFile, name: String) -> types.EnvFile {
   let arguments = [#("name", query.String(name))]
 
   let selection = query.select(self.selection, "withoutVariable", arguments)
+
+  types.EnvFile(selection)
+}
+
+pub type GetOption {
+  /// Return the value exactly as written to the file. No quote removal or variable expansion
+  GetRaw(Bool)
+}
+
+/// Lookup a variable (last occurrence wins) and return its value, or an empty string
+pub fn get(self: types.EnvFile, name: String) -> Result(String, DaggerError) {
+  get_with(self, name, [])
+}
+
+/// Lookup a variable (last occurrence wins) and return its value, or an empty string
+pub fn get_with(
+  self: types.EnvFile,
+  name: String,
+  options: List(GetOption),
+) -> Result(String, DaggerError) {
+  let arguments = [#("name", query.String(name))]
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          GetRaw(value) -> #("raw", query.Boolean(value))
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "get", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// Check if a variable exists
+pub fn exists(self: types.EnvFile, name: String) -> Result(Bool, DaggerError) {
+  let arguments = [#("name", query.String(name))]
+
+  let selection = query.select(self.selection, "exists", arguments)
+
+  query.execute(selection, decode.bool)
+}
+
+/// Return as a file
+pub fn as_file(self: types.EnvFile) -> types.File {
+  let arguments = []
+
+  let selection = query.select(self.selection, "asFile", arguments)
+
+  types.File(selection)
+}
+
+/// Filters variables by prefix and removes the pref from keys. Variables without the prefix are excluded. For example, with the prefix "MY_APP_" and variables: MY_APP_TOKEN=topsecret MY_APP_NAME=hello FOO=bar the resulting environment will contain: TOKEN=topsecret NAME=hello
+pub fn namespace(self: types.EnvFile, prefix: String) -> types.EnvFile {
+  let arguments = [#("prefix", query.String(prefix))]
+
+  let selection = query.select(self.selection, "namespace", arguments)
 
   types.EnvFile(selection)
 }

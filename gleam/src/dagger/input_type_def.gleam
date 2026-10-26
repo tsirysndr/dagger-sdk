@@ -27,6 +27,15 @@ pub fn codec() -> codec.Codec(types.InputTypeDef) {
   )
 }
 
+/// A unique identifier for this InputTypeDef.
+pub fn id(self: types.InputTypeDef) -> Result(types.Id, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "id", arguments)
+
+  query.execute(selection, types.decode_id())
+}
+
 /// Static fields defined on this input object, if any.
 pub fn fields(
   self: types.InputTypeDef,
@@ -44,15 +53,6 @@ pub fn fields(
       }),
     ),
   )
-}
-
-/// A unique identifier for this InputTypeDef.
-pub fn id(self: types.InputTypeDef) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
 }
 
 /// The name of the input object.

@@ -29,9 +29,52 @@ pub fn codec() -> codec.Codec(types.Address) {
   )
 }
 
+/// A unique identifier for this Address.
+pub fn id(self: types.Address) -> Result(types.Id, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "id", arguments)
+
+  query.execute(selection, types.decode_id())
+}
+
+/// The address value
+pub fn value(self: types.Address) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "value", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+pub type ContainerOption {
+  /// Resolve the address's image tag live, ignoring the workspace lockfile: neither read a pinned value nor record one.
+  ///
+  /// A DAG address is unaffected: its module evaluates as usual.
+  ContainerNoLock(Bool)
+}
+
 /// Load a container from the address.
 pub fn container(self: types.Address) -> types.Container {
+  container_with(self, [])
+}
+
+/// Load a container from the address.
+pub fn container_with(
+  self: types.Address,
+  options: List(ContainerOption),
+) -> types.Container {
   let arguments = []
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          ContainerNoLock(value) -> #("noLock", query.Boolean(value))
+        }
+      }),
+    )
 
   let selection = query.select(self.selection, "container", arguments)
 
@@ -43,6 +86,10 @@ pub type DirectoryOption {
   DirectoryInclude(List(String))
   DirectoryGitignore(Bool)
   DirectoryNoCache(Bool)
+  /// Resolve the address's git ref live, ignoring the workspace lockfile: neither read a pinned value nor record one.
+  ///
+  /// A DAG address is unaffected: its module evaluates as usual.
+  DirectoryNoLock(Bool)
 }
 
 /// Load a directory from the address.
@@ -75,6 +122,8 @@ pub fn directory_with(
           DirectoryGitignore(value) -> #("gitignore", query.Boolean(value))
 
           DirectoryNoCache(value) -> #("noCache", query.Boolean(value))
+
+          DirectoryNoLock(value) -> #("noLock", query.Boolean(value))
         }
       }),
     )
@@ -89,6 +138,10 @@ pub type FileOption {
   FileInclude(List(String))
   FileGitignore(Bool)
   FileNoCache(Bool)
+  /// Resolve the address's git ref live, ignoring the workspace lockfile: neither read a pinned value nor record one.
+  ///
+  /// A DAG address is unaffected: its module evaluates as usual.
+  FileNoLock(Bool)
 }
 
 /// Load a file from the address.
@@ -118,6 +171,8 @@ pub fn file_with(self: types.Address, options: List(FileOption)) -> types.File {
           FileGitignore(value) -> #("gitignore", query.Boolean(value))
 
           FileNoCache(value) -> #("noCache", query.Boolean(value))
+
+          FileNoLock(value) -> #("noLock", query.Boolean(value))
         }
       }),
     )
@@ -127,9 +182,34 @@ pub fn file_with(self: types.Address, options: List(FileOption)) -> types.File {
   types.File(selection)
 }
 
+pub type GitRefOption {
+  /// Resolve the address's git ref live, ignoring the workspace lockfile: neither read a pinned value nor record one.
+  ///
+  /// A DAG address is unaffected: its module evaluates as usual.
+  GitRefNoLock(Bool)
+}
+
 /// Load a git ref (branch, tag or commit) from the address.
 pub fn git_ref(self: types.Address) -> types.GitRef {
+  git_ref_with(self, [])
+}
+
+/// Load a git ref (branch, tag or commit) from the address.
+pub fn git_ref_with(
+  self: types.Address,
+  options: List(GitRefOption),
+) -> types.GitRef {
   let arguments = []
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          GitRefNoLock(value) -> #("noLock", query.Boolean(value))
+        }
+      }),
+    )
 
   let selection = query.select(self.selection, "gitRef", arguments)
 
@@ -143,15 +223,6 @@ pub fn git_repository(self: types.Address) -> types.GitRepository {
   let selection = query.select(self.selection, "gitRepository", arguments)
 
   types.GitRepository(selection)
-}
-
-/// A unique identifier for this Address.
-pub fn id(self: types.Address) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
 }
 
 /// Load a secret from the address.
@@ -181,11 +252,20 @@ pub fn socket(self: types.Address) -> types.Socket {
   types.Socket(selection)
 }
 
-/// The address value
-pub fn value(self: types.Address) -> Result(String, DaggerError) {
+/// Load a volume from the address.
+pub fn volume(self: types.Address) -> types.Volume {
   let arguments = []
 
-  let selection = query.select(self.selection, "value", arguments)
+  let selection = query.select(self.selection, "volume", arguments)
 
-  query.execute(selection, decode.string)
+  types.Volume(selection)
+}
+
+/// Load a workspace from a module reference.
+pub fn workspace(self: types.Address) -> types.Workspace {
+  let arguments = []
+
+  let selection = query.select(self.selection, "workspace", arguments)
+
+  types.Workspace(selection)
 }

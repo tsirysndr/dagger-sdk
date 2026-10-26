@@ -31,43 +31,6 @@ pub fn codec() -> codec.Codec(types.Function) {
   )
 }
 
-/// Arguments accepted by the function, if any.
-pub fn args(
-  self: types.Function,
-) -> Result(List(types.FunctionArg), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "args", arguments)
-
-  query.execute_with_children(
-    selection,
-    "id",
-    decode.list(
-      decode.map(decode.at(["id"], decode.string), fn(id) {
-        types.FunctionArg(query.load(selection, "FunctionArg", id))
-      }),
-    ),
-  )
-}
-
-/// The reason this function is deprecated, if any.
-pub fn deprecated(self: types.Function) -> Result(Option(String), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "deprecated", arguments)
-
-  query.execute(selection, decode.optional(decode.string))
-}
-
-/// A doc string for the function, if any.
-pub fn description(self: types.Function) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "description", arguments)
-
-  query.execute(selection, decode.string)
-}
-
 /// A unique identifier for this Function.
 pub fn id(self: types.Function) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -77,40 +40,96 @@ pub fn id(self: types.Function) -> Result(types.Id, DaggerError) {
   query.execute(selection, types.decode_id())
 }
 
-/// The name of the function.
-pub fn name(self: types.Function) -> Result(String, DaggerError) {
-  let arguments = []
+/// Returns the function with the given doc string.
+pub fn with_description(
+  self: types.Function,
+  description: String,
+) -> types.Function {
+  let arguments = [#("description", query.String(description))]
 
-  let selection = query.select(self.selection, "name", arguments)
+  let selection = query.select(self.selection, "withDescription", arguments)
 
-  query.execute(selection, decode.string)
+  types.Function(selection)
 }
 
-/// The type returned by the function.
-pub fn return_type(self: types.Function) -> types.TypeDef {
-  let arguments = []
-
-  let selection = query.select(self.selection, "returnType", arguments)
-
-  types.TypeDef(selection)
+pub type WithDeprecatedOption {
+  /// Reason or migration path describing the deprecation.
+  WithDeprecatedReason(String)
 }
 
-/// The location of this function declaration.
-pub fn source_map(self: types.Function) -> types.SourceMap {
-  let arguments = []
-
-  let selection = query.select(self.selection, "sourceMap", arguments)
-
-  types.SourceMap(selection)
+/// Returns the function with the provided deprecation reason.
+pub fn with_deprecated(self: types.Function) -> types.Function {
+  with_deprecated_with(self, [])
 }
 
-/// If this function is provided by a module, the name of the module. Unset otherwise.
-pub fn source_module_name(self: types.Function) -> Result(String, DaggerError) {
+/// Returns the function with the provided deprecation reason.
+pub fn with_deprecated_with(
+  self: types.Function,
+  options: List(WithDeprecatedOption),
+) -> types.Function {
   let arguments = []
 
-  let selection = query.select(self.selection, "sourceModuleName", arguments)
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          WithDeprecatedReason(value) -> #("reason", query.String(value))
+        }
+      }),
+    )
 
-  query.execute(selection, decode.string)
+  let selection = query.select(self.selection, "withDeprecated", arguments)
+
+  types.Function(selection)
+}
+
+/// Returns the function with a flag indicating it's a check.
+pub fn with_check(self: types.Function) -> types.Function {
+  let arguments = []
+
+  let selection = query.select(self.selection, "withCheck", arguments)
+
+  types.Function(selection)
+}
+
+/// Returns the function with a flag indicating it's a generator.
+pub fn with_generator(self: types.Function) -> types.Function {
+  let arguments = []
+
+  let selection = query.select(self.selection, "withGenerator", arguments)
+
+  types.Function(selection)
+}
+
+/// Returns the function with a flag indicating it returns a service for dagger up.
+pub fn with_up(self: types.Function) -> types.Function {
+  let arguments = []
+
+  let selection = query.select(self.selection, "withUp", arguments)
+
+  types.Function(selection)
+}
+
+/// Returns the function with a flag indicating it is a source of expertise.
+pub fn with_agent(self: types.Function) -> types.Function {
+  let arguments = []
+
+  let selection = query.select(self.selection, "withAgent", arguments)
+
+  types.Function(selection)
+}
+
+/// Returns the function with the given source map.
+pub fn with_source_map(
+  self: types.Function,
+  source_map: types.SourceMap,
+) -> types.Function {
+  let arguments = [#("sourceMap", query.Reference(source_map.selection))]
+
+  let selection = query.select(self.selection, "withSourceMap", arguments)
+
+  types.Function(selection)
 }
 
 pub type WithArgOption {
@@ -228,76 +247,75 @@ pub fn with_cache_policy_with(
   types.Function(selection)
 }
 
-/// Returns the function with a flag indicating it's a check.
-pub fn with_check(self: types.Function) -> types.Function {
+/// The name of the function.
+pub fn name(self: types.Function) -> Result(String, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "withCheck", arguments)
+  let selection = query.select(self.selection, "name", arguments)
 
-  types.Function(selection)
+  query.execute(selection, decode.string)
 }
 
-pub type WithDeprecatedOption {
-  /// Reason or migration path describing the deprecation.
-  WithDeprecatedReason(String)
+/// A doc string for the function, if any.
+pub fn description(self: types.Function) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "description", arguments)
+
+  query.execute(selection, decode.string)
 }
 
-/// Returns the function with the provided deprecation reason.
-pub fn with_deprecated(self: types.Function) -> types.Function {
-  with_deprecated_with(self, [])
+/// The reason this function is deprecated, if any.
+pub fn deprecated(self: types.Function) -> Result(Option(String), DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "deprecated", arguments)
+
+  query.execute(selection, decode.optional(decode.string))
 }
 
-/// Returns the function with the provided deprecation reason.
-pub fn with_deprecated_with(
+/// The location of this function declaration.
+pub fn source_map(self: types.Function) -> types.SourceMap {
+  let arguments = []
+
+  let selection = query.select(self.selection, "sourceMap", arguments)
+
+  types.SourceMap(selection)
+}
+
+/// If this function is provided by a module, the name of the module. Unset otherwise.
+pub fn source_module_name(self: types.Function) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "sourceModuleName", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// Arguments accepted by the function, if any.
+pub fn args(
   self: types.Function,
-  options: List(WithDeprecatedOption),
-) -> types.Function {
+) -> Result(List(types.FunctionArg), DaggerError) {
   let arguments = []
 
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          WithDeprecatedReason(value) -> #("reason", query.String(value))
-        }
+  let selection = query.select(self.selection, "args", arguments)
+
+  query.execute_with_children(
+    selection,
+    "id",
+    decode.list(
+      decode.map(decode.at(["id"], decode.string), fn(id) {
+        types.FunctionArg(query.load(selection, "FunctionArg", id))
       }),
-    )
-
-  let selection = query.select(self.selection, "withDeprecated", arguments)
-
-  types.Function(selection)
+    ),
+  )
 }
 
-/// Returns the function with the given doc string.
-pub fn with_description(
-  self: types.Function,
-  description: String,
-) -> types.Function {
-  let arguments = [#("description", query.String(description))]
-
-  let selection = query.select(self.selection, "withDescription", arguments)
-
-  types.Function(selection)
-}
-
-/// Returns the function with a flag indicating it's a generator.
-pub fn with_generator(self: types.Function) -> types.Function {
+/// The type returned by the function.
+pub fn return_type(self: types.Function) -> types.TypeDef {
   let arguments = []
 
-  let selection = query.select(self.selection, "withGenerator", arguments)
+  let selection = query.select(self.selection, "returnType", arguments)
 
-  types.Function(selection)
-}
-
-/// Returns the function with the given source map.
-pub fn with_source_map(
-  self: types.Function,
-  source_map: types.SourceMap,
-) -> types.Function {
-  let arguments = [#("sourceMap", query.Reference(source_map.selection))]
-
-  let selection = query.select(self.selection, "withSourceMap", arguments)
-
-  types.Function(selection)
+  types.TypeDef(selection)
 }

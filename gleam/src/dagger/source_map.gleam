@@ -27,13 +27,22 @@ pub fn codec() -> codec.Codec(types.SourceMap) {
   )
 }
 
-/// The column number within the line.
-pub fn column(self: types.SourceMap) -> Result(Int, DaggerError) {
+/// A unique identifier for this SourceMap.
+pub fn id(self: types.SourceMap) -> Result(types.Id, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "column", arguments)
+  let selection = query.select(self.selection, "id", arguments)
 
-  query.execute(selection, decode.int)
+  query.execute(selection, types.decode_id())
+}
+
+/// The module dependency this was declared in.
+pub fn module(self: types.SourceMap) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "module", arguments)
+
+  query.execute(selection, decode.string)
 }
 
 /// The filename from the module source.
@@ -45,15 +54,6 @@ pub fn filename(self: types.SourceMap) -> Result(String, DaggerError) {
   query.execute(selection, decode.string)
 }
 
-/// A unique identifier for this SourceMap.
-pub fn id(self: types.SourceMap) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
-}
-
 /// The line number within the filename.
 pub fn line(self: types.SourceMap) -> Result(Int, DaggerError) {
   let arguments = []
@@ -63,13 +63,13 @@ pub fn line(self: types.SourceMap) -> Result(Int, DaggerError) {
   query.execute(selection, decode.int)
 }
 
-/// The module dependency this was declared in.
-pub fn module(self: types.SourceMap) -> Result(String, DaggerError) {
+/// The column number within the line.
+pub fn column(self: types.SourceMap) -> Result(Int, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "module", arguments)
+  let selection = query.select(self.selection, "column", arguments)
 
-  query.execute(selection, decode.string)
+  query.execute(selection, decode.int)
 }
 
 /// The URL to the file, if any. This can be used to link to the source map in the browser.

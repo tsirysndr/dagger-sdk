@@ -31,221 +31,36 @@ pub fn codec() -> codec.Codec(types.Directory) {
   )
 }
 
-/// Converts this directory to a local git repository
-pub fn as_git(self: types.Directory) -> types.GitRepository {
+/// A unique identifier for this Directory.
+pub fn id(self: types.Directory) -> Result(types.Id, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "asGit", arguments)
+  let selection = query.select(self.selection, "id", arguments)
 
-  types.GitRepository(selection)
+  query.execute(selection, types.decode_id())
 }
 
-pub type AsModuleOption {
-  /// An optional subpath of the directory which contains the module's configuration file.
-  /// 
-  /// If not set, the module source code is loaded from the root of the directory.
-  AsModuleSourceRootPath(String)
-}
-
-/// Load the directory as a Dagger module source
-pub fn as_module(self: types.Directory) -> types.Module {
-  as_module_with(self, [])
-}
-
-/// Load the directory as a Dagger module source
-pub fn as_module_with(
-  self: types.Directory,
-  options: List(AsModuleOption),
-) -> types.Module {
+/// Force evaluation in the engine.
+pub fn sync(self: types.Directory) -> Result(types.Directory, DaggerError) {
   let arguments = []
 
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          AsModuleSourceRootPath(value) -> #(
-            "sourceRootPath",
-            query.String(value),
-          )
-        }
-      }),
-    )
+  let selection = query.select(self.selection, "sync", arguments)
 
-  let selection = query.select(self.selection, "asModule", arguments)
-
-  types.Module(selection)
+  query.execute(
+    selection,
+    decode.map(decode.string, fn(id) {
+      types.Directory(query.load(selection, "Directory", id))
+    }),
+  )
 }
 
-pub type AsModuleSourceOption {
-  /// An optional subpath of the directory which contains the module's configuration file.
-  /// 
-  /// If not set, the module source code is loaded from the root of the directory.
-  AsModuleSourceSourceRootPath(String)
-}
-
-/// Load the directory as a Dagger module source
-pub fn as_module_source(self: types.Directory) -> types.ModuleSource {
-  as_module_source_with(self, [])
-}
-
-/// Load the directory as a Dagger module source
-pub fn as_module_source_with(
-  self: types.Directory,
-  options: List(AsModuleSourceOption),
-) -> types.ModuleSource {
+/// Returns the name of the directory.
+pub fn name(self: types.Directory) -> Result(String, DaggerError) {
   let arguments = []
 
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          AsModuleSourceSourceRootPath(value) -> #(
-            "sourceRootPath",
-            query.String(value),
-          )
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "asModuleSource", arguments)
-
-  types.ModuleSource(selection)
-}
-
-/// Return the difference between this directory and another directory, typically an older snapshot.
-/// 
-/// The difference is encoded as a changeset, which also tracks removed files, and can be applied to other directories.
-pub fn changes(
-  self: types.Directory,
-  from: types.Directory,
-) -> types.Changeset {
-  let arguments = [#("from", query.Reference(from.selection))]
-
-  let selection = query.select(self.selection, "changes", arguments)
-
-  types.Changeset(selection)
-}
-
-/// Change the owner of the directory contents recursively.
-pub fn chown(
-  self: types.Directory,
-  path: String,
-  owner: String,
-) -> types.Directory {
-  let arguments = [
-    #("path", query.String(path)),
-    #("owner", query.String(owner)),
-  ]
-
-  let selection = query.select(self.selection, "chown", arguments)
-
-  types.Directory(selection)
-}
-
-/// Return the difference between this directory and an another directory. The difference is encoded as a directory.
-pub fn diff(self: types.Directory, other: types.Directory) -> types.Directory {
-  let arguments = [#("other", query.Reference(other.selection))]
-
-  let selection = query.select(self.selection, "diff", arguments)
-
-  types.Directory(selection)
-}
-
-/// Return the directory's digest. The format of the digest is not guaranteed to be stable between releases of Dagger. It is guaranteed to be stable between invocations of the same Dagger engine.
-pub fn digest(self: types.Directory) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "digest", arguments)
+  let selection = query.select(self.selection, "name", arguments)
 
   query.execute(selection, decode.string)
-}
-
-/// Retrieves a directory at the given path.
-pub fn directory(self: types.Directory, path: String) -> types.Directory {
-  let arguments = [#("path", query.String(path))]
-
-  let selection = query.select(self.selection, "directory", arguments)
-
-  types.Directory(selection)
-}
-
-pub type DockerBuildOption {
-  /// Path to the Dockerfile to use (e.g., "frontend.Dockerfile").
-  DockerBuildDockerfile(String)
-  /// The platform to build.
-  DockerBuildPlatform(types.Platform)
-  /// Build arguments to use in the build.
-  DockerBuildBuildArgs(List(types.BuildArg))
-  /// Target build stage to build.
-  DockerBuildTarget(String)
-  /// Secrets to pass to the build.
-  /// 
-  /// They will be mounted at /run/secrets/[secret-name].
-  DockerBuildSecrets(List(types.Secret))
-  /// If set, skip the automatic init process injected into containers created by RUN statements.
-  /// 
-  /// This should only be used if the user requires that their exec processes be the pid 1 process in the container. Otherwise it may result in unexpected behavior.
-  DockerBuildNoInit(Bool)
-  /// A socket to use for SSH authentication during the build
-  /// 
-  /// (e.g., for Dockerfile RUN --mount=type=ssh instructions).
-  /// 
-  /// Typically obtained via host.unixSocket() pointing to the SSH_AUTH_SOCK.
-  DockerBuildSsh(types.Socket)
-}
-
-/// Use Dockerfile compatibility to build a container from this directory. Only use this function for Dockerfile compatibility. Otherwise use the native Container type directly, it is feature-complete and supports all Dockerfile features.
-pub fn docker_build(self: types.Directory) -> types.Container {
-  docker_build_with(self, [])
-}
-
-/// Use Dockerfile compatibility to build a container from this directory. Only use this function for Dockerfile compatibility. Otherwise use the native Container type directly, it is feature-complete and supports all Dockerfile features.
-pub fn docker_build_with(
-  self: types.Directory,
-  options: List(DockerBuildOption),
-) -> types.Container {
-  let arguments = []
-
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          DockerBuildDockerfile(value) -> #("dockerfile", query.String(value))
-
-          DockerBuildPlatform(value) -> #(
-            "platform",
-            types.encode_platform(value),
-          )
-
-          DockerBuildBuildArgs(value) -> #(
-            "buildArgs",
-            query.List(
-              list.map(value, fn(item) { types.encode_build_arg(item) }),
-            ),
-          )
-
-          DockerBuildTarget(value) -> #("target", query.String(value))
-
-          DockerBuildSecrets(value) -> #(
-            "secrets",
-            query.List(
-              list.map(value, fn(item) { query.Reference(item.selection) }),
-            ),
-          )
-
-          DockerBuildNoInit(value) -> #("noInit", query.Boolean(value))
-
-          DockerBuildSsh(value) -> #("ssh", query.Reference(value.selection))
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "dockerBuild", arguments)
-
-  types.Container(selection)
 }
 
 pub type EntriesOption {
@@ -280,159 +95,6 @@ pub fn entries_with(
   query.execute(selection, decode.list(decode.string))
 }
 
-pub type ExistsOption {
-  /// If specified, also validate the type of file (e.g. "REGULAR_TYPE", "DIRECTORY_TYPE", or "SYMLINK_TYPE").
-  ExistsExpectedType(types.ExistsType)
-  /// If specified, do not follow symlinks.
-  ExistsDoNotFollowSymlinks(Bool)
-}
-
-/// check if a file or directory exists
-pub fn exists(
-  self: types.Directory,
-  path: String,
-) -> Result(Bool, DaggerError) {
-  exists_with(self, path, [])
-}
-
-/// check if a file or directory exists
-pub fn exists_with(
-  self: types.Directory,
-  path: String,
-  options: List(ExistsOption),
-) -> Result(Bool, DaggerError) {
-  let arguments = [#("path", query.String(path))]
-
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          ExistsExpectedType(value) -> #(
-            "expectedType",
-            types.encode_exists_type(value),
-          )
-
-          ExistsDoNotFollowSymlinks(value) -> #(
-            "doNotFollowSymlinks",
-            query.Boolean(value),
-          )
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "exists", arguments)
-
-  query.execute(selection, decode.bool)
-}
-
-pub type ExportOption {
-  /// If true, then the host directory will be wiped clean before exporting so that it exactly matches the directory being exported; this means it will delete any files on the host that aren't in the exported dir. If false (the default), the contents of the directory will be merged with any existing contents of the host directory, leaving any existing files on the host that aren't in the exported directory alone.
-  ExportWipe(Bool)
-}
-
-/// Writes the contents of the directory to a path on the host.
-pub fn export(
-  self: types.Directory,
-  path: String,
-) -> Result(String, DaggerError) {
-  export_with(self, path, [])
-}
-
-/// Writes the contents of the directory to a path on the host.
-pub fn export_with(
-  self: types.Directory,
-  path: String,
-  options: List(ExportOption),
-) -> Result(String, DaggerError) {
-  let arguments = [#("path", query.String(path))]
-
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          ExportWipe(value) -> #("wipe", query.Boolean(value))
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "export", arguments)
-
-  query.execute(selection, decode.string)
-}
-
-/// Retrieve a file at the given path.
-pub fn file(self: types.Directory, path: String) -> types.File {
-  let arguments = [#("path", query.String(path))]
-
-  let selection = query.select(self.selection, "file", arguments)
-
-  types.File(selection)
-}
-
-pub type FilterOption {
-  /// If set, paths matching one of these glob patterns is excluded from the new snapshot. Example: ["node_modules/", ".git*", ".env"]
-  FilterExclude(List(String))
-  /// If set, only paths matching one of these glob patterns is included in the new snapshot. Example: (e.g., ["app/", "package.*"]).
-  FilterInclude(List(String))
-  /// If set, apply .gitignore rules when filtering the directory.
-  FilterGitignore(Bool)
-}
-
-/// Return a snapshot with some paths included or excluded
-pub fn filter(self: types.Directory) -> types.Directory {
-  filter_with(self, [])
-}
-
-/// Return a snapshot with some paths included or excluded
-pub fn filter_with(
-  self: types.Directory,
-  options: List(FilterOption),
-) -> types.Directory {
-  let arguments = []
-
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          FilterExclude(value) -> #(
-            "exclude",
-            query.List(list.map(value, fn(item) { query.String(item) })),
-          )
-
-          FilterInclude(value) -> #(
-            "include",
-            query.List(list.map(value, fn(item) { query.String(item) })),
-          )
-
-          FilterGitignore(value) -> #("gitignore", query.Boolean(value))
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "filter", arguments)
-
-  types.Directory(selection)
-}
-
-/// Search up the directory tree for a file or directory, and return its path. If no match, return null
-pub fn find_up(
-  self: types.Directory,
-  name: String,
-  start: String,
-) -> Result(Option(String), DaggerError) {
-  let arguments = [
-    #("name", query.String(name)),
-    #("start", query.String(start)),
-  ]
-
-  let selection = query.select(self.selection, "findUp", arguments)
-
-  query.execute(selection, decode.optional(decode.string))
-}
-
 /// Returns a list of files and directories that matche the given pattern.
 pub fn glob(
   self: types.Directory,
@@ -443,24 +105,6 @@ pub fn glob(
   let selection = query.select(self.selection, "glob", arguments)
 
   query.execute(selection, decode.list(decode.string))
-}
-
-/// A unique identifier for this Directory.
-pub fn id(self: types.Directory) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
-}
-
-/// Returns the name of the directory.
-pub fn name(self: types.Directory) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "name", arguments)
-
-  query.execute(selection, decode.string)
 }
 
 pub type SearchOption {
@@ -487,7 +131,7 @@ pub type SearchOption {
 }
 
 /// Searches for content matching the given regular expression or literal string.
-/// 
+///
 /// Uses Rust regex syntax; escape literal ., [, ], {, }, | with backslashes.
 pub fn search(
   self: types.Directory,
@@ -497,7 +141,7 @@ pub fn search(
 }
 
 /// Searches for content matching the given regular expression or literal string.
-/// 
+///
 /// Uses Rust regex syntax; escape literal ., [, ], {, }, | with backslashes.
 pub fn search_with(
   self: types.Directory,
@@ -553,203 +197,31 @@ pub fn search_with(
   )
 }
 
-pub type StatOption {
-  /// If specified, do not follow symlinks.
-  StatDoNotFollowSymlinks(Bool)
+/// Return the directory's digest. The format of the digest is not guaranteed to be stable between releases of Dagger. It is guaranteed to be stable between invocations of the same Dagger engine.
+pub fn digest(self: types.Directory) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "digest", arguments)
+
+  query.execute(selection, decode.string)
 }
 
-/// Return file status
-pub fn stat(self: types.Directory, path: String) -> types.Stat {
-  stat_with(self, path, [])
-}
-
-/// Return file status
-pub fn stat_with(
-  self: types.Directory,
-  path: String,
-  options: List(StatOption),
-) -> types.Stat {
+/// Retrieve a file at the given path.
+pub fn file(self: types.Directory, path: String) -> types.File {
   let arguments = [#("path", query.String(path))]
 
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          StatDoNotFollowSymlinks(value) -> #(
-            "doNotFollowSymlinks",
-            query.Boolean(value),
-          )
-        }
-      }),
-    )
+  let selection = query.select(self.selection, "file", arguments)
 
-  let selection = query.select(self.selection, "stat", arguments)
-
-  types.Stat(selection)
-}
-
-/// Force evaluation in the engine.
-pub fn sync(self: types.Directory) -> Result(types.Directory, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "sync", arguments)
-
-  query.execute(
-    selection,
-    decode.map(decode.string, fn(id) {
-      types.Directory(query.load(selection, "Directory", id))
-    }),
-  )
-}
-
-pub type TerminalOption {
-  /// If set, override the default container used for the terminal.
-  TerminalContainer(types.Container)
-  /// If set, override the container's default terminal command and invoke these command arguments instead.
-  TerminalCmd(List(String))
-  /// Provides Dagger access to the executed command.
-  TerminalExperimentalPrivilegedNesting(Bool)
-  /// Execute the command with all root capabilities. This is similar to running a command with "sudo" or executing "docker run" with the "--privileged" flag. Containerization does not provide any security guarantees when using this option. It should only be used when absolutely necessary and only with trusted commands.
-  TerminalInsecureRootCapabilities(Bool)
-}
-
-/// Opens an interactive terminal in new container with this directory mounted inside.
-pub fn terminal(self: types.Directory) -> types.Directory {
-  terminal_with(self, [])
-}
-
-/// Opens an interactive terminal in new container with this directory mounted inside.
-pub fn terminal_with(
-  self: types.Directory,
-  options: List(TerminalOption),
-) -> types.Directory {
-  let arguments = []
-
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          TerminalContainer(value) -> #(
-            "container",
-            query.Reference(value.selection),
-          )
-
-          TerminalCmd(value) -> #(
-            "cmd",
-            query.List(list.map(value, fn(item) { query.String(item) })),
-          )
-
-          TerminalExperimentalPrivilegedNesting(value) -> #(
-            "experimentalPrivilegedNesting",
-            query.Boolean(value),
-          )
-
-          TerminalInsecureRootCapabilities(value) -> #(
-            "insecureRootCapabilities",
-            query.Boolean(value),
-          )
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "terminal", arguments)
-
-  types.Directory(selection)
-}
-
-/// Return a directory with changes from another directory applied to it.
-pub fn with_changes(
-  self: types.Directory,
-  changes: types.Changeset,
-) -> types.Directory {
-  let arguments = [#("changes", query.Reference(changes.selection))]
-
-  let selection = query.select(self.selection, "withChanges", arguments)
-
-  types.Directory(selection)
-}
-
-pub type WithDirectoryOption {
-  /// Exclude artifacts that match the given pattern (e.g., ["node_modules/", ".git*"]).
-  WithDirectoryExclude(List(String))
-  /// Include only artifacts that match the given pattern (e.g., ["app/", "package.*"]).
-  WithDirectoryInclude(List(String))
-  /// Apply .gitignore filter rules inside the directory
-  WithDirectoryGitignore(Bool)
-  /// A user:group to set for the copied directory and its contents.
-  /// 
-  /// The user and group must be an ID (1000:1000), not a name (foo:bar).
-  /// 
-  /// If the group is omitted, it defaults to the same as the user.
-  WithDirectoryOwner(String)
-}
-
-/// Return a snapshot with a directory added
-pub fn with_directory(
-  self: types.Directory,
-  path: String,
-  source: types.Directory,
-) -> types.Directory {
-  with_directory_with(self, path, source, [])
-}
-
-/// Return a snapshot with a directory added
-pub fn with_directory_with(
-  self: types.Directory,
-  path: String,
-  source: types.Directory,
-  options: List(WithDirectoryOption),
-) -> types.Directory {
-  let arguments = [
-    #("path", query.String(path)),
-    #("source", query.Reference(source.selection)),
-  ]
-
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          WithDirectoryExclude(value) -> #(
-            "exclude",
-            query.List(list.map(value, fn(item) { query.String(item) })),
-          )
-
-          WithDirectoryInclude(value) -> #(
-            "include",
-            query.List(list.map(value, fn(item) { query.String(item) })),
-          )
-
-          WithDirectoryGitignore(value) -> #("gitignore", query.Boolean(value))
-
-          WithDirectoryOwner(value) -> #("owner", query.String(value))
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "withDirectory", arguments)
-
-  types.Directory(selection)
-}
-
-/// Raise an error.
-pub fn with_error(self: types.Directory, err: String) -> types.Directory {
-  let arguments = [#("err", query.String(err))]
-
-  let selection = query.select(self.selection, "withError", arguments)
-
-  types.Directory(selection)
+  types.File(selection)
 }
 
 pub type WithFileOption {
   /// Permission given to the copied file (e.g., 0600).
   WithFilePermissions(Int)
   /// A user:group to set for the copied directory and its contents.
-  /// 
-  /// The user and group must be an ID (1000:1000), not a name (foo:bar).
-  /// 
+  ///
+  /// The user and group can either be an ID (1000:1000) or a name (foo:bar).
+  ///
   /// If the group is omitted, it defaults to the same as the user.
   WithFileOwner(String)
 }
@@ -838,45 +310,6 @@ pub fn with_files_with(
   types.Directory(selection)
 }
 
-pub type WithNewDirectoryOption {
-  /// Permission granted to the created directory (e.g., 0777).
-  WithNewDirectoryPermissions(Int)
-}
-
-/// Retrieves this directory plus a new directory created at the given path.
-pub fn with_new_directory(
-  self: types.Directory,
-  path: String,
-) -> types.Directory {
-  with_new_directory_with(self, path, [])
-}
-
-/// Retrieves this directory plus a new directory created at the given path.
-pub fn with_new_directory_with(
-  self: types.Directory,
-  path: String,
-  options: List(WithNewDirectoryOption),
-) -> types.Directory {
-  let arguments = [#("path", query.String(path))]
-
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          WithNewDirectoryPermissions(value) -> #(
-            "permissions",
-            query.Int(value),
-          )
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "withNewDirectory", arguments)
-
-  types.Directory(selection)
-}
-
 pub type WithNewFileOption {
   /// Permissions of the new file. Example: 0600
   WithNewFilePermissions(Int)
@@ -918,67 +351,6 @@ pub fn with_new_file_with(
   types.Directory(selection)
 }
 
-/// Retrieves this directory with the given Git-compatible patch applied.
-pub fn with_patch(self: types.Directory, patch: String) -> types.Directory {
-  let arguments = [#("patch", query.String(patch))]
-
-  let selection = query.select(self.selection, "withPatch", arguments)
-
-  types.Directory(selection)
-}
-
-/// Retrieves this directory with the given Git-compatible patch file applied.
-pub fn with_patch_file(
-  self: types.Directory,
-  patch: types.File,
-) -> types.Directory {
-  let arguments = [#("patch", query.Reference(patch.selection))]
-
-  let selection = query.select(self.selection, "withPatchFile", arguments)
-
-  types.Directory(selection)
-}
-
-/// Return a snapshot with a symlink
-pub fn with_symlink(
-  self: types.Directory,
-  target: String,
-  link_name: String,
-) -> types.Directory {
-  let arguments = [
-    #("target", query.String(target)),
-    #("linkName", query.String(link_name)),
-  ]
-
-  let selection = query.select(self.selection, "withSymlink", arguments)
-
-  types.Directory(selection)
-}
-
-/// Retrieves this directory with all file/dir timestamps set to the given time.
-pub fn with_timestamps(
-  self: types.Directory,
-  timestamp: Int,
-) -> types.Directory {
-  let arguments = [#("timestamp", query.Int(timestamp))]
-
-  let selection = query.select(self.selection, "withTimestamps", arguments)
-
-  types.Directory(selection)
-}
-
-/// Return a snapshot with a subdirectory removed
-pub fn without_directory(
-  self: types.Directory,
-  path: String,
-) -> types.Directory {
-  let arguments = [#("path", query.String(path))]
-
-  let selection = query.select(self.selection, "withoutDirectory", arguments)
-
-  types.Directory(selection)
-}
-
 /// Return a snapshot with a file removed
 pub fn without_file(self: types.Directory, path: String) -> types.Directory {
   let arguments = [#("path", query.String(path))]
@@ -1000,4 +372,728 @@ pub fn without_files(
   let selection = query.select(self.selection, "withoutFiles", arguments)
 
   types.Directory(selection)
+}
+
+pub type ExistsOption {
+  /// If specified, also validate the type of file (e.g. "REGULAR_TYPE", "DIRECTORY_TYPE", or "SYMLINK_TYPE").
+  ExistsExpectedType(types.ExistsType)
+  /// If specified, do not follow symlinks.
+  ExistsDoNotFollowSymlinks(Bool)
+}
+
+/// check if a file or directory exists
+pub fn exists(
+  self: types.Directory,
+  path: String,
+) -> Result(Bool, DaggerError) {
+  exists_with(self, path, [])
+}
+
+/// check if a file or directory exists
+pub fn exists_with(
+  self: types.Directory,
+  path: String,
+  options: List(ExistsOption),
+) -> Result(Bool, DaggerError) {
+  let arguments = [#("path", query.String(path))]
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          ExistsExpectedType(value) -> #(
+            "expectedType",
+            types.encode_exists_type(value),
+          )
+
+          ExistsDoNotFollowSymlinks(value) -> #(
+            "doNotFollowSymlinks",
+            query.Boolean(value),
+          )
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "exists", arguments)
+
+  query.execute(selection, decode.bool)
+}
+
+pub type StatOption {
+  /// If specified, do not follow symlinks.
+  StatDoNotFollowSymlinks(Bool)
+}
+
+/// Return file status
+pub fn stat(self: types.Directory, path: String) -> types.Stat {
+  stat_with(self, path, [])
+}
+
+/// Return file status
+pub fn stat_with(
+  self: types.Directory,
+  path: String,
+  options: List(StatOption),
+) -> types.Stat {
+  let arguments = [#("path", query.String(path))]
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          StatDoNotFollowSymlinks(value) -> #(
+            "doNotFollowSymlinks",
+            query.Boolean(value),
+          )
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "stat", arguments)
+
+  types.Stat(selection)
+}
+
+/// Retrieves a directory at the given path.
+pub fn directory(self: types.Directory, path: String) -> types.Directory {
+  let arguments = [#("path", query.String(path))]
+
+  let selection = query.select(self.selection, "directory", arguments)
+
+  types.Directory(selection)
+}
+
+pub type WithDirectoryOption {
+  /// Exclude artifacts that match the given pattern (e.g., ["node_modules/", ".git*"]).
+  WithDirectoryExclude(List(String))
+  /// Include only artifacts that match the given pattern (e.g., ["app/", "package.*"]).
+  WithDirectoryInclude(List(String))
+  /// Apply .gitignore filter rules inside the directory
+  WithDirectoryGitignore(Bool)
+  /// A user:group to set for the copied directory and its contents.
+  ///
+  /// The user and group can either be an ID (1000:1000) or a name (foo:bar).
+  ///
+  /// If the group is omitted, it defaults to the same as the user.
+  WithDirectoryOwner(String)
+  /// Permission given to the copied directory and contents (e.g., 0755).
+  WithDirectoryPermissions(Int)
+}
+
+/// Return a snapshot with a directory added
+pub fn with_directory(
+  self: types.Directory,
+  path: String,
+  source: types.Directory,
+) -> types.Directory {
+  with_directory_with(self, path, source, [])
+}
+
+/// Return a snapshot with a directory added
+pub fn with_directory_with(
+  self: types.Directory,
+  path: String,
+  source: types.Directory,
+  options: List(WithDirectoryOption),
+) -> types.Directory {
+  let arguments = [
+    #("path", query.String(path)),
+    #("source", query.Reference(source.selection)),
+  ]
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          WithDirectoryExclude(value) -> #(
+            "exclude",
+            query.List(list.map(value, fn(item) { query.String(item) })),
+          )
+
+          WithDirectoryInclude(value) -> #(
+            "include",
+            query.List(list.map(value, fn(item) { query.String(item) })),
+          )
+
+          WithDirectoryGitignore(value) -> #("gitignore", query.Boolean(value))
+
+          WithDirectoryOwner(value) -> #("owner", query.String(value))
+
+          WithDirectoryPermissions(value) -> #("permissions", query.Int(value))
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "withDirectory", arguments)
+
+  types.Directory(selection)
+}
+
+pub type FilterOption {
+  /// If set, paths matching one of these glob patterns is excluded from the new snapshot. Example: ["node_modules/", ".git*", ".env"]
+  FilterExclude(List(String))
+  /// If set, only paths matching one of these glob patterns is included in the new snapshot. Example: (e.g., ["app/", "package.*"]).
+  FilterInclude(List(String))
+  /// If set, apply .gitignore rules when filtering the directory.
+  FilterGitignore(Bool)
+}
+
+/// Return a snapshot with some paths included or excluded
+pub fn filter(self: types.Directory) -> types.Directory {
+  filter_with(self, [])
+}
+
+/// Return a snapshot with some paths included or excluded
+pub fn filter_with(
+  self: types.Directory,
+  options: List(FilterOption),
+) -> types.Directory {
+  let arguments = []
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          FilterExclude(value) -> #(
+            "exclude",
+            query.List(list.map(value, fn(item) { query.String(item) })),
+          )
+
+          FilterInclude(value) -> #(
+            "include",
+            query.List(list.map(value, fn(item) { query.String(item) })),
+          )
+
+          FilterGitignore(value) -> #("gitignore", query.Boolean(value))
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "filter", arguments)
+
+  types.Directory(selection)
+}
+
+pub type WithNewDirectoryOption {
+  /// Permission granted to the created directory (e.g., 0777).
+  WithNewDirectoryPermissions(Int)
+}
+
+/// Retrieves this directory plus a new directory created at the given path.
+pub fn with_new_directory(
+  self: types.Directory,
+  path: String,
+) -> types.Directory {
+  with_new_directory_with(self, path, [])
+}
+
+/// Retrieves this directory plus a new directory created at the given path.
+pub fn with_new_directory_with(
+  self: types.Directory,
+  path: String,
+  options: List(WithNewDirectoryOption),
+) -> types.Directory {
+  let arguments = [#("path", query.String(path))]
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          WithNewDirectoryPermissions(value) -> #(
+            "permissions",
+            query.Int(value),
+          )
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "withNewDirectory", arguments)
+
+  types.Directory(selection)
+}
+
+/// Return a snapshot with a subdirectory removed
+pub fn without_directory(
+  self: types.Directory,
+  path: String,
+) -> types.Directory {
+  let arguments = [#("path", query.String(path))]
+
+  let selection = query.select(self.selection, "withoutDirectory", arguments)
+
+  types.Directory(selection)
+}
+
+/// Return the difference between this directory and an another directory. The difference is encoded as a directory.
+pub fn diff(self: types.Directory, other: types.Directory) -> types.Directory {
+  let arguments = [#("other", query.Reference(other.selection))]
+
+  let selection = query.select(self.selection, "diff", arguments)
+
+  types.Directory(selection)
+}
+
+/// Search up the directory tree for a file or directory, and return its path. If no match, return null
+pub fn find_up(
+  self: types.Directory,
+  name: String,
+  start: String,
+) -> Result(Option(String), DaggerError) {
+  let arguments = [
+    #("name", query.String(name)),
+    #("start", query.String(start)),
+  ]
+
+  let selection = query.select(self.selection, "findUp", arguments)
+
+  query.execute(selection, decode.optional(decode.string))
+}
+
+/// Return the difference between this directory and another directory, typically an older snapshot.
+///
+/// The difference is encoded as a changeset, which also tracks removed files, and can be applied to other directories.
+pub fn changes(
+  self: types.Directory,
+  from: types.Directory,
+) -> types.Changeset {
+  let arguments = [#("from", query.Reference(from.selection))]
+
+  let selection = query.select(self.selection, "changes", arguments)
+
+  types.Changeset(selection)
+}
+
+/// Return a directory with changes from another directory applied to it.
+pub fn with_changes(
+  self: types.Directory,
+  changes: types.Changeset,
+) -> types.Directory {
+  let arguments = [#("changes", query.Reference(changes.selection))]
+
+  let selection = query.select(self.selection, "withChanges", arguments)
+
+  types.Directory(selection)
+}
+
+pub type ExportOption {
+  /// If true, then the host directory will be wiped clean before exporting so that it exactly matches the directory being exported; this means it will delete any files on the host that aren't in the exported dir. If false (the default), the contents of the directory will be merged with any existing contents of the host directory, leaving any existing files on the host that aren't in the exported directory alone.
+  ExportWipe(Bool)
+}
+
+/// Writes the contents of the directory to a path on the host.
+pub fn export(
+  self: types.Directory,
+  path: String,
+) -> Result(String, DaggerError) {
+  export_with(self, path, [])
+}
+
+/// Writes the contents of the directory to a path on the host.
+pub fn export_with(
+  self: types.Directory,
+  path: String,
+  options: List(ExportOption),
+) -> Result(String, DaggerError) {
+  let arguments = [#("path", query.String(path))]
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          ExportWipe(value) -> #("wipe", query.Boolean(value))
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "export", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+pub type DockerBuildOption {
+  /// Path to the Dockerfile to use (e.g., "frontend.Dockerfile").
+  DockerBuildDockerfile(String)
+  /// The platform to build.
+  DockerBuildPlatform(types.Platform)
+  /// Build arguments to use in the build.
+  DockerBuildBuildArgs(List(types.BuildArg))
+  /// Target build stage to build.
+  DockerBuildTarget(String)
+  /// Secrets to pass to the build.
+  ///
+  /// They will be mounted at /run/secrets/[secret-name].
+  DockerBuildSecrets(List(types.Secret))
+  /// If set, skip the automatic init process injected into containers created by RUN statements.
+  ///
+  /// This should only be used if the user requires that their exec processes be the pid 1 process in the container. Otherwise it may result in unexpected behavior.
+  DockerBuildNoInit(Bool)
+  /// A socket to use for SSH authentication during the build
+  ///
+  /// (e.g., for Dockerfile RUN --mount=type=ssh instructions).
+  ///
+  /// Typically obtained via host.unixSocket() pointing to the SSH_AUTH_SOCK.
+  DockerBuildSsh(types.Socket)
+}
+
+/// Use Dockerfile compatibility to build a container from this directory. Only use this function for Dockerfile compatibility. Otherwise use the native Container type directly, it is feature-complete and supports all Dockerfile features.
+pub fn docker_build(self: types.Directory) -> types.Container {
+  docker_build_with(self, [])
+}
+
+/// Use Dockerfile compatibility to build a container from this directory. Only use this function for Dockerfile compatibility. Otherwise use the native Container type directly, it is feature-complete and supports all Dockerfile features.
+pub fn docker_build_with(
+  self: types.Directory,
+  options: List(DockerBuildOption),
+) -> types.Container {
+  let arguments = []
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          DockerBuildDockerfile(value) -> #("dockerfile", query.String(value))
+
+          DockerBuildPlatform(value) -> #(
+            "platform",
+            types.encode_platform(value),
+          )
+
+          DockerBuildBuildArgs(value) -> #(
+            "buildArgs",
+            query.List(
+              list.map(value, fn(item) { types.encode_build_arg(item) }),
+            ),
+          )
+
+          DockerBuildTarget(value) -> #("target", query.String(value))
+
+          DockerBuildSecrets(value) -> #(
+            "secrets",
+            query.List(
+              list.map(value, fn(item) { query.Reference(item.selection) }),
+            ),
+          )
+
+          DockerBuildNoInit(value) -> #("noInit", query.Boolean(value))
+
+          DockerBuildSsh(value) -> #("ssh", query.Reference(value.selection))
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "dockerBuild", arguments)
+
+  types.Container(selection)
+}
+
+/// Retrieves this directory with all file/dir timestamps set to the given time.
+pub fn with_timestamps(
+  self: types.Directory,
+  timestamp: Int,
+) -> types.Directory {
+  let arguments = [#("timestamp", query.Int(timestamp))]
+
+  let selection = query.select(self.selection, "withTimestamps", arguments)
+
+  types.Directory(selection)
+}
+
+pub type WithPatchOption {
+  /// How to handle hunks that no longer apply to the target content: fail (default), or apply what fits and leave git-style conflict markers where it doesn't.
+  WithPatchOnConflict(types.PatchConflict)
+}
+
+/// Retrieves this directory with the given Git-compatible patch applied.
+pub fn with_patch(self: types.Directory, patch: String) -> types.Directory {
+  with_patch_with(self, patch, [])
+}
+
+/// Retrieves this directory with the given Git-compatible patch applied.
+pub fn with_patch_with(
+  self: types.Directory,
+  patch: String,
+  options: List(WithPatchOption),
+) -> types.Directory {
+  let arguments = [#("patch", query.String(patch))]
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          WithPatchOnConflict(value) -> #(
+            "onConflict",
+            types.encode_patch_conflict(value),
+          )
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "withPatch", arguments)
+
+  types.Directory(selection)
+}
+
+pub type WithPatchFileOption {
+  /// How to handle hunks that no longer apply to the target content: fail (default), or apply what fits and leave git-style conflict markers where it doesn't.
+  WithPatchFileOnConflict(types.PatchConflict)
+}
+
+/// Retrieves this directory with the given Git-compatible patch file applied.
+pub fn with_patch_file(
+  self: types.Directory,
+  patch: types.File,
+) -> types.Directory {
+  with_patch_file_with(self, patch, [])
+}
+
+/// Retrieves this directory with the given Git-compatible patch file applied.
+pub fn with_patch_file_with(
+  self: types.Directory,
+  patch: types.File,
+  options: List(WithPatchFileOption),
+) -> types.Directory {
+  let arguments = [#("patch", query.Reference(patch.selection))]
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          WithPatchFileOnConflict(value) -> #(
+            "onConflict",
+            types.encode_patch_conflict(value),
+          )
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "withPatchFile", arguments)
+
+  types.Directory(selection)
+}
+
+/// Converts this directory to a local git repository
+pub fn as_git(self: types.Directory) -> types.GitRepository {
+  let arguments = []
+
+  let selection = query.select(self.selection, "asGit", arguments)
+
+  types.GitRepository(selection)
+}
+
+pub type AsWorkspaceOption {
+  /// Current working directory inside the workspace root. Defaults to the workspace root.
+  AsWorkspaceCwd(String)
+}
+
+/// Creates a synthetic workspace from this directory.
+pub fn as_workspace(self: types.Directory) -> types.Workspace {
+  as_workspace_with(self, [])
+}
+
+/// Creates a synthetic workspace from this directory.
+pub fn as_workspace_with(
+  self: types.Directory,
+  options: List(AsWorkspaceOption),
+) -> types.Workspace {
+  let arguments = []
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          AsWorkspaceCwd(value) -> #("cwd", query.String(value))
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "asWorkspace", arguments)
+
+  types.Workspace(selection)
+}
+
+pub type TerminalOption {
+  /// If set, override the default container used for the terminal.
+  TerminalContainer(types.Container)
+  /// If set, override the container's default terminal command and invoke these command arguments instead.
+  TerminalCmd(List(String))
+  /// Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+  TerminalDisableDaggerInDagger(Bool)
+  TerminalExperimentalPrivilegedNesting(Bool)
+  /// Execute the command with all root capabilities. This is similar to running a command with "sudo" or executing "docker run" with the "--privileged" flag. Containerization does not provide any security guarantees when using this option. It should only be used when absolutely necessary and only with trusted commands.
+  TerminalInsecureRootCapabilities(Bool)
+}
+
+/// Opens an interactive terminal in new container with this directory mounted inside.
+pub fn terminal(self: types.Directory) -> types.Directory {
+  terminal_with(self, [])
+}
+
+/// Opens an interactive terminal in new container with this directory mounted inside.
+pub fn terminal_with(
+  self: types.Directory,
+  options: List(TerminalOption),
+) -> types.Directory {
+  let arguments = []
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          TerminalContainer(value) -> #(
+            "container",
+            query.Reference(value.selection),
+          )
+
+          TerminalCmd(value) -> #(
+            "cmd",
+            query.List(list.map(value, fn(item) { query.String(item) })),
+          )
+
+          TerminalDisableDaggerInDagger(value) -> #(
+            "disableDaggerInDagger",
+            query.Boolean(value),
+          )
+
+          TerminalExperimentalPrivilegedNesting(value) -> #(
+            "experimentalPrivilegedNesting",
+            query.Boolean(value),
+          )
+
+          TerminalInsecureRootCapabilities(value) -> #(
+            "insecureRootCapabilities",
+            query.Boolean(value),
+          )
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "terminal", arguments)
+
+  types.Directory(selection)
+}
+
+/// Return a snapshot with a symlink
+pub fn with_symlink(
+  self: types.Directory,
+  target: String,
+  link_name: String,
+) -> types.Directory {
+  let arguments = [
+    #("target", query.String(target)),
+    #("linkName", query.String(link_name)),
+  ]
+
+  let selection = query.select(self.selection, "withSymlink", arguments)
+
+  types.Directory(selection)
+}
+
+/// Change the owner of the directory contents recursively.
+pub fn chown(
+  self: types.Directory,
+  path: String,
+  owner: String,
+) -> types.Directory {
+  let arguments = [
+    #("path", query.String(path)),
+    #("owner", query.String(owner)),
+  ]
+
+  let selection = query.select(self.selection, "chown", arguments)
+
+  types.Directory(selection)
+}
+
+/// Raise an error.
+pub fn with_error(self: types.Directory, err: String) -> types.Directory {
+  let arguments = [#("err", query.String(err))]
+
+  let selection = query.select(self.selection, "withError", arguments)
+
+  types.Directory(selection)
+}
+
+pub type AsModuleOption {
+  /// An optional subpath of the directory which contains the module's configuration file.
+  ///
+  /// If not set, the module source code is loaded from the root of the directory.
+  AsModuleSourceRootPath(String)
+}
+
+/// Load the directory as a Dagger module source
+pub fn as_module(self: types.Directory) -> types.Module {
+  as_module_with(self, [])
+}
+
+/// Load the directory as a Dagger module source
+pub fn as_module_with(
+  self: types.Directory,
+  options: List(AsModuleOption),
+) -> types.Module {
+  let arguments = []
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          AsModuleSourceRootPath(value) -> #(
+            "sourceRootPath",
+            query.String(value),
+          )
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "asModule", arguments)
+
+  types.Module(selection)
+}
+
+pub type AsModuleSourceOption {
+  /// An optional subpath of the directory which contains the module's configuration file.
+  ///
+  /// If not set, the module source code is loaded from the root of the directory.
+  AsModuleSourceSourceRootPath(String)
+}
+
+/// Load the directory as a Dagger module source
+pub fn as_module_source(self: types.Directory) -> types.ModuleSource {
+  as_module_source_with(self, [])
+}
+
+/// Load the directory as a Dagger module source
+pub fn as_module_source_with(
+  self: types.Directory,
+  options: List(AsModuleSourceOption),
+) -> types.ModuleSource {
+  let arguments = []
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          AsModuleSourceSourceRootPath(value) -> #(
+            "sourceRootPath",
+            query.String(value),
+          )
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "asModuleSource", arguments)
+
+  types.ModuleSource(selection)
 }

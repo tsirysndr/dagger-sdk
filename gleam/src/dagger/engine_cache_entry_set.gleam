@@ -31,15 +31,13 @@ pub fn codec() -> codec.Codec(types.EngineCacheEntrySet) {
   )
 }
 
-/// The total disk space used by the cache entries in this set.
-pub fn disk_space_bytes(
-  self: types.EngineCacheEntrySet,
-) -> Result(Int, DaggerError) {
+/// A unique identifier for this EngineCacheEntrySet.
+pub fn id(self: types.EngineCacheEntrySet) -> Result(types.Id, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "diskSpaceBytes", arguments)
+  let selection = query.select(self.selection, "id", arguments)
 
-  query.execute(selection, decode.int)
+  query.execute(selection, types.decode_id())
 }
 
 /// The list of individual cache entries in the set
@@ -72,11 +70,13 @@ pub fn entry_count(
   query.execute(selection, decode.int)
 }
 
-/// A unique identifier for this EngineCacheEntrySet.
-pub fn id(self: types.EngineCacheEntrySet) -> Result(types.Id, DaggerError) {
+/// The total disk space used by the cache entries in this set.
+pub fn disk_space_bytes(
+  self: types.EngineCacheEntrySet,
+) -> Result(Int, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "id", arguments)
+  let selection = query.select(self.selection, "diskSpaceBytes", arguments)
 
-  query.execute(selection, types.decode_id())
+  query.execute(selection, decode.int)
 }

@@ -36,6 +36,22 @@ pub fn id(self: types.Error) -> Result(types.Id, DaggerError) {
   query.execute(selection, types.decode_id())
 }
 
+/// Add a value to the error.
+pub fn with_value(
+  self: types.Error,
+  name: String,
+  value: types.Json,
+) -> types.Error {
+  let arguments = [
+    #("name", query.String(name)),
+    #("value", types.encode_json(value)),
+  ]
+
+  let selection = query.select(self.selection, "withValue", arguments)
+
+  types.Error(selection)
+}
+
 /// A description of the error.
 pub fn message(self: types.Error) -> Result(String, DaggerError) {
   let arguments = []
@@ -62,20 +78,4 @@ pub fn values(
       }),
     ),
   )
-}
-
-/// Add a value to the error.
-pub fn with_value(
-  self: types.Error,
-  name: String,
-  value: types.Json,
-) -> types.Error {
-  let arguments = [
-    #("name", query.String(name)),
-    #("value", types.encode_json(value)),
-  ]
-
-  let selection = query.select(self.selection, "withValue", arguments)
-
-  types.Error(selection)
 }

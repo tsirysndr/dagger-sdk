@@ -27,15 +27,6 @@ pub fn codec() -> codec.Codec(types.SearchSubmatch) {
   )
 }
 
-/// The match's end offset within the matched lines.
-pub fn end(self: types.SearchSubmatch) -> Result(Int, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "end", arguments)
-
-  query.execute(selection, decode.int)
-}
-
 /// A unique identifier for this SearchSubmatch.
 pub fn id(self: types.SearchSubmatch) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -43,6 +34,15 @@ pub fn id(self: types.SearchSubmatch) -> Result(types.Id, DaggerError) {
   let selection = query.select(self.selection, "id", arguments)
 
   query.execute(selection, types.decode_id())
+}
+
+/// The matched text.
+pub fn text(self: types.SearchSubmatch) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "text", arguments)
+
+  query.execute(selection, decode.string)
 }
 
 /// The match's start offset within the matched lines.
@@ -54,11 +54,11 @@ pub fn start(self: types.SearchSubmatch) -> Result(Int, DaggerError) {
   query.execute(selection, decode.int)
 }
 
-/// The matched text.
-pub fn text(self: types.SearchSubmatch) -> Result(String, DaggerError) {
+/// The match's end offset within the matched lines.
+pub fn end(self: types.SearchSubmatch) -> Result(Int, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "text", arguments)
+  let selection = query.select(self.selection, "end", arguments)
 
-  query.execute(selection, decode.string)
+  query.execute(selection, decode.int)
 }

@@ -31,13 +31,13 @@ pub fn codec() -> codec.Codec(types.Host) {
   )
 }
 
-/// Accesses a container image on the host.
-pub fn container_image(self: types.Host, name: String) -> types.Container {
-  let arguments = [#("name", query.String(name))]
+/// A unique identifier for this Host.
+pub fn id(self: types.Host) -> Result(types.Id, DaggerError) {
+  let arguments = []
 
-  let selection = query.select(self.selection, "containerImage", arguments)
+  let selection = query.select(self.selection, "id", arguments)
 
-  types.Container(selection)
+  query.execute(selection, types.decode_id())
 }
 
 pub type DirectoryOption {
@@ -159,13 +159,63 @@ pub fn find_up_with(
   query.execute(selection, decode.optional(decode.string))
 }
 
-/// A unique identifier for this Host.
-pub fn id(self: types.Host) -> Result(types.Id, DaggerError) {
-  let arguments = []
+/// Accesses a Unix socket on the host.
+pub fn unix_socket(self: types.Host, path: String) -> types.Socket {
+  let arguments = [#("path", query.String(path))]
 
-  let selection = query.select(self.selection, "id", arguments)
+  let selection = query.select(self.selection, "unixSocket", arguments)
 
-  query.execute(selection, types.decode_id())
+  types.Socket(selection)
+}
+
+pub type TunnelOption {
+  /// Map each service port to the same port on the host, as if the service were running natively.
+  ///
+  /// Note: enabling may result in port conflicts.
+  TunnelNative(Bool)
+  /// Configure explicit port forwarding rules for the tunnel.
+  ///
+  /// If a port's frontend is unspecified or 0, a random port will be chosen by the host.
+  ///
+  /// If no ports are given, all of the service's ports are forwarded. If native is true, each port maps to the same port on the host. If native is false, each port maps to a random port chosen by the host.
+  ///
+  /// If ports are given and native is true, the ports are additive.
+  TunnelPorts(List(types.PortForward))
+}
+
+/// Creates a tunnel that forwards traffic from the host to a service.
+pub fn tunnel(self: types.Host, service: types.Service) -> types.Service {
+  tunnel_with(self, service, [])
+}
+
+/// Creates a tunnel that forwards traffic from the host to a service.
+pub fn tunnel_with(
+  self: types.Host,
+  service: types.Service,
+  options: List(TunnelOption),
+) -> types.Service {
+  let arguments = [#("service", query.Reference(service.selection))]
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          TunnelNative(value) -> #("native", query.Boolean(value))
+
+          TunnelPorts(value) -> #(
+            "ports",
+            query.List(
+              list.map(value, fn(item) { types.encode_port_forward(item) }),
+            ),
+          )
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "tunnel", arguments)
+
+  types.Service(selection)
 }
 
 pub type ServiceOption {
@@ -209,61 +259,11 @@ pub fn service_with(
   types.Service(selection)
 }
 
-pub type TunnelOption {
-  /// Map each service port to the same port on the host, as if the service were running natively.
-  /// 
-  /// Note: enabling may result in port conflicts.
-  TunnelNative(Bool)
-  /// Configure explicit port forwarding rules for the tunnel.
-  /// 
-  /// If a port's frontend is unspecified or 0, a random port will be chosen by the host.
-  /// 
-  /// If no ports are given, all of the service's ports are forwarded. If native is true, each port maps to the same port on the host. If native is false, each port maps to a random port chosen by the host.
-  /// 
-  /// If ports are given and native is true, the ports are additive.
-  TunnelPorts(List(types.PortForward))
-}
+/// Accesses a container image on the host.
+pub fn container_image(self: types.Host, name: String) -> types.Container {
+  let arguments = [#("name", query.String(name))]
 
-/// Creates a tunnel that forwards traffic from the host to a service.
-pub fn tunnel(self: types.Host, service: types.Service) -> types.Service {
-  tunnel_with(self, service, [])
-}
+  let selection = query.select(self.selection, "containerImage", arguments)
 
-/// Creates a tunnel that forwards traffic from the host to a service.
-pub fn tunnel_with(
-  self: types.Host,
-  service: types.Service,
-  options: List(TunnelOption),
-) -> types.Service {
-  let arguments = [#("service", query.Reference(service.selection))]
-
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          TunnelNative(value) -> #("native", query.Boolean(value))
-
-          TunnelPorts(value) -> #(
-            "ports",
-            query.List(
-              list.map(value, fn(item) { types.encode_port_forward(item) }),
-            ),
-          )
-        }
-      }),
-    )
-
-  let selection = query.select(self.selection, "tunnel", arguments)
-
-  types.Service(selection)
-}
-
-/// Accesses a Unix socket on the host.
-pub fn unix_socket(self: types.Host, path: String) -> types.Socket {
-  let arguments = [#("path", query.String(path))]
-
-  let selection = query.select(self.selection, "unixSocket", arguments)
-
-  types.Socket(selection)
+  types.Container(selection)
 }

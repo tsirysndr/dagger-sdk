@@ -29,26 +29,6 @@ pub fn codec() -> codec.Codec(types.FieldTypeDef) {
   )
 }
 
-/// The reason this enum member is deprecated, if any.
-pub fn deprecated(
-  self: types.FieldTypeDef,
-) -> Result(Option(String), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "deprecated", arguments)
-
-  query.execute(selection, decode.optional(decode.string))
-}
-
-/// A doc string for the field, if any.
-pub fn description(self: types.FieldTypeDef) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "description", arguments)
-
-  query.execute(selection, decode.string)
-}
-
 /// A unique identifier for this FieldTypeDef.
 pub fn id(self: types.FieldTypeDef) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -58,11 +38,29 @@ pub fn id(self: types.FieldTypeDef) -> Result(types.Id, DaggerError) {
   query.execute(selection, types.decode_id())
 }
 
+/// The type of the field.
+pub fn type_def(self: types.FieldTypeDef) -> types.TypeDef {
+  let arguments = []
+
+  let selection = query.select(self.selection, "typeDef", arguments)
+
+  types.TypeDef(selection)
+}
+
 /// The name of the field in lowerCamelCase format.
 pub fn name(self: types.FieldTypeDef) -> Result(String, DaggerError) {
   let arguments = []
 
   let selection = query.select(self.selection, "name", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// A doc string for the field, if any.
+pub fn description(self: types.FieldTypeDef) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "description", arguments)
 
   query.execute(selection, decode.string)
 }
@@ -76,11 +74,13 @@ pub fn source_map(self: types.FieldTypeDef) -> types.SourceMap {
   types.SourceMap(selection)
 }
 
-/// The type of the field.
-pub fn type_def(self: types.FieldTypeDef) -> types.TypeDef {
+/// The reason this enum member is deprecated, if any.
+pub fn deprecated(
+  self: types.FieldTypeDef,
+) -> Result(Option(String), DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "typeDef", arguments)
+  let selection = query.select(self.selection, "deprecated", arguments)
 
-  types.TypeDef(selection)
+  query.execute(selection, decode.optional(decode.string))
 }

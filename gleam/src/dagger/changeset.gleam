@@ -29,20 +29,80 @@ pub fn codec() -> codec.Codec(types.Changeset) {
   )
 }
 
-/// Files and directories that were added in the newer directory.
-pub fn added_paths(self: types.Changeset) -> Result(List(String), DaggerError) {
+/// A unique identifier for this Changeset.
+pub fn id(self: types.Changeset) -> Result(types.Id, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "addedPaths", arguments)
+  let selection = query.select(self.selection, "id", arguments)
 
-  query.execute(selection, decode.list(decode.string))
+  query.execute(selection, types.decode_id())
 }
 
-/// The newer/upper snapshot.
-pub fn after(self: types.Changeset) -> types.Directory {
+/// Force evaluation in the engine.
+pub fn sync(self: types.Changeset) -> Result(types.Changeset, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "after", arguments)
+  let selection = query.select(self.selection, "sync", arguments)
+
+  query.execute(
+    selection,
+    decode.map(decode.string, fn(id) {
+      types.Changeset(query.load(selection, "Changeset", id))
+    }),
+  )
+}
+
+pub type FilterOption {
+  /// Only include changes at paths matching these patterns. Empty includes all paths.
+  FilterInclude(List(String))
+  /// Exclude changes at paths matching these patterns.
+  FilterExclude(List(String))
+}
+
+/// Select changes matching the supplied glob patterns, preserving their original baseline.
+///
+/// Includes additions, modifications, and deletions. Selecting only one side of a rename yields an addition or deletion.
+pub fn filter(self: types.Changeset) -> types.Changeset {
+  filter_with(self, [])
+}
+
+/// Select changes matching the supplied glob patterns, preserving their original baseline.
+///
+/// Includes additions, modifications, and deletions. Selecting only one side of a rename yields an addition or deletion.
+pub fn filter_with(
+  self: types.Changeset,
+  options: List(FilterOption),
+) -> types.Changeset {
+  let arguments = []
+
+  let arguments =
+    list.append(
+      arguments,
+      list.map(options, fn(option) {
+        case option {
+          FilterInclude(value) -> #(
+            "include",
+            query.List(list.map(value, fn(item) { query.String(item) })),
+          )
+
+          FilterExclude(value) -> #(
+            "exclude",
+            query.List(list.map(value, fn(item) { query.String(item) })),
+          )
+        }
+      }),
+    )
+
+  let selection = query.select(self.selection, "filter", arguments)
+
+  types.Changeset(selection)
+}
+
+/// Return a snapshot containing only the created and modified files
+pub fn layer(self: types.Changeset) -> types.Directory {
+  let arguments = []
+
+  let selection = query.select(self.selection, "layer", arguments)
 
   types.Directory(selection)
 }
@@ -54,15 +114,6 @@ pub fn as_patch(self: types.Changeset) -> types.File {
   let selection = query.select(self.selection, "asPatch", arguments)
 
   types.File(selection)
-}
-
-/// The older/lower snapshot to compare against.
-pub fn before(self: types.Changeset) -> types.Directory {
-  let arguments = []
-
-  let selection = query.select(self.selection, "before", arguments)
-
-  types.Directory(selection)
 }
 
 /// Applies the diff represented by this changeset to a path on the host.
@@ -77,15 +128,6 @@ pub fn export(
   query.execute(selection, decode.string)
 }
 
-/// A unique identifier for this Changeset.
-pub fn id(self: types.Changeset) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
-}
-
 /// Returns true if the changeset is empty (i.e. there are no changes).
 pub fn is_empty(self: types.Changeset) -> Result(Bool, DaggerError) {
   let arguments = []
@@ -95,13 +137,13 @@ pub fn is_empty(self: types.Changeset) -> Result(Bool, DaggerError) {
   query.execute(selection, decode.bool)
 }
 
-/// Return a snapshot containing only the created and modified files
-pub fn layer(self: types.Changeset) -> types.Directory {
+/// Files and directories that were added in the newer directory.
+pub fn added_paths(self: types.Changeset) -> Result(List(String), DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "layer", arguments)
+  let selection = query.select(self.selection, "addedPaths", arguments)
 
-  types.Directory(selection)
+  query.execute(selection, decode.list(decode.string))
 }
 
 /// Files and directories that existed before and were updated in the newer directory.
@@ -126,17 +168,22 @@ pub fn removed_paths(
   query.execute(selection, decode.list(decode.string))
 }
 
-/// Force evaluation in the engine.
-pub fn sync(self: types.Changeset) -> Result(types.Changeset, DaggerError) {
+/// Structured per-path diff statistics (kind and line counts) for this changeset.
+pub fn diff_stats(
+  self: types.Changeset,
+) -> Result(List(types.DiffStat), DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "sync", arguments)
+  let selection = query.select(self.selection, "diffStats", arguments)
 
-  query.execute(
+  query.execute_with_children(
     selection,
-    decode.map(decode.string, fn(id) {
-      types.Changeset(query.load(selection, "Changeset", id))
-    }),
+    "id",
+    decode.list(
+      decode.map(decode.at(["id"], decode.string), fn(id) {
+        types.DiffStat(query.load(selection, "DiffStat", id))
+      }),
+    ),
   )
 }
 
@@ -146,7 +193,7 @@ pub type WithChangesetOption {
 }
 
 /// Add changes to an existing changeset
-/// 
+///
 /// By default the operation will fail in case of conflicts, for instance a file modified in both changesets. The behavior can be adjusted using onConflict argument
 pub fn with_changeset(
   self: types.Changeset,
@@ -156,7 +203,7 @@ pub fn with_changeset(
 }
 
 /// Add changes to an existing changeset
-/// 
+///
 /// By default the operation will fail in case of conflicts, for instance a file modified in both changesets. The behavior can be adjusted using onConflict argument
 pub fn with_changeset_with(
   self: types.Changeset,
@@ -189,9 +236,9 @@ pub type WithChangesetsOption {
 }
 
 /// Add changes from multiple changesets using git octopus merge strategy
-/// 
+///
 /// This is more efficient than chaining multiple withChangeset calls when merging many changesets.
-/// 
+///
 /// Only FAIL and FAIL_EARLY conflict strategies are supported (octopus merge cannot use -X ours/theirs).
 pub fn with_changesets(
   self: types.Changeset,
@@ -201,9 +248,9 @@ pub fn with_changesets(
 }
 
 /// Add changes from multiple changesets using git octopus merge strategy
-/// 
+///
 /// This is more efficient than chaining multiple withChangeset calls when merging many changesets.
-/// 
+///
 /// Only FAIL and FAIL_EARLY conflict strategies are supported (octopus merge cannot use -X ours/theirs).
 pub fn with_changesets_with(
   self: types.Changeset,
@@ -235,4 +282,22 @@ pub fn with_changesets_with(
   let selection = query.select(self.selection, "withChangesets", arguments)
 
   types.Changeset(selection)
+}
+
+/// The older/lower snapshot to compare against.
+pub fn before(self: types.Changeset) -> types.Directory {
+  let arguments = []
+
+  let selection = query.select(self.selection, "before", arguments)
+
+  types.Directory(selection)
+}
+
+/// The newer/upper snapshot.
+pub fn after(self: types.Changeset) -> types.Directory {
+  let arguments = []
+
+  let selection = query.select(self.selection, "after", arguments)
+
+  types.Directory(selection)
 }

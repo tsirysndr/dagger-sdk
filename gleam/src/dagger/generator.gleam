@@ -6,8 +6,6 @@ import dagger/types
 
 import dagger/errors.{type Error as DaggerError}
 
-import gleam/dynamic/decode
-
 pub type Generator =
   types.Generator
 
@@ -27,33 +25,6 @@ pub fn codec() -> codec.Codec(types.Generator) {
   )
 }
 
-/// The generated changeset
-pub fn changes(self: types.Generator) -> types.Changeset {
-  let arguments = []
-
-  let selection = query.select(self.selection, "changes", arguments)
-
-  types.Changeset(selection)
-}
-
-/// Whether the generator complete
-pub fn completed(self: types.Generator) -> Result(Bool, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "completed", arguments)
-
-  query.execute(selection, decode.bool)
-}
-
-/// Return the description of the generator
-pub fn description(self: types.Generator) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "description", arguments)
-
-  query.execute(selection, decode.string)
-}
-
 /// A unique identifier for this Generator.
 pub fn id(self: types.Generator) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -63,47 +34,29 @@ pub fn id(self: types.Generator) -> Result(types.Id, DaggerError) {
   query.execute(selection, types.decode_id())
 }
 
-/// Wether changeset from the generator execution is empty or not
-pub fn is_empty(self: types.Generator) -> Result(Bool, DaggerError) {
+/// Run the generator and return its changes.
+pub fn changeset(self: types.Generator) -> types.Changeset {
   let arguments = []
 
-  let selection = query.select(self.selection, "isEmpty", arguments)
+  let selection = query.select(self.selection, "changeset", arguments)
 
-  query.execute(selection, decode.bool)
+  types.Changeset(selection)
 }
 
-/// Return the fully qualified name of the generator
-pub fn name(self: types.Generator) -> Result(String, DaggerError) {
+/// Run the generator and retain its result.
+pub fn sync(self: types.Generator) -> types.Generator {
   let arguments = []
 
-  let selection = query.select(self.selection, "name", arguments)
-
-  query.execute(selection, decode.string)
-}
-
-/// The original module in which the generator has been defined
-pub fn original_module(self: types.Generator) -> types.Module {
-  let arguments = []
-
-  let selection = query.select(self.selection, "originalModule", arguments)
-
-  types.Module(selection)
-}
-
-/// The path of the generator within its module
-pub fn path(self: types.Generator) -> Result(List(String), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "path", arguments)
-
-  query.execute(selection, decode.list(decode.string))
-}
-
-/// Execute the generator
-pub fn run(self: types.Generator) -> types.Generator {
-  let arguments = []
-
-  let selection = query.select(self.selection, "run", arguments)
+  let selection = query.select(self.selection, "sync", arguments)
 
   types.Generator(selection)
+}
+
+/// A check that passes when this generator would produce no changes.
+pub fn stale(self: types.Generator) -> types.Check {
+  let arguments = []
+
+  let selection = query.select(self.selection, "stale", arguments)
+
+  types.Check(selection)
 }

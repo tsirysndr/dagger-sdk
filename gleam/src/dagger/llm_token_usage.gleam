@@ -27,6 +27,34 @@ pub fn codec() -> codec.Codec(types.LlmTokenUsage) {
   )
 }
 
+/// A unique identifier for this LLMTokenUsage.
+pub fn id(self: types.LlmTokenUsage) -> Result(types.Id, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "id", arguments)
+
+  query.execute(selection, types.decode_id())
+}
+
+/// Uncached input tokens sent to the model.
+pub fn input_tokens(self: types.LlmTokenUsage) -> Result(Int, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "inputTokens", arguments)
+
+  query.execute(selection, decode.int)
+}
+
+/// Tokens received from the model, including text and tool calls.
+pub fn output_tokens(self: types.LlmTokenUsage) -> Result(Int, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "outputTokens", arguments)
+
+  query.execute(selection, decode.int)
+}
+
+/// Input tokens served from the provider's prompt cache.
 pub fn cached_token_reads(
   self: types.LlmTokenUsage,
 ) -> Result(Int, DaggerError) {
@@ -37,6 +65,7 @@ pub fn cached_token_reads(
   query.execute(selection, decode.int)
 }
 
+/// Input tokens written to the provider's prompt cache.
 pub fn cached_token_writes(
   self: types.LlmTokenUsage,
 ) -> Result(Int, DaggerError) {
@@ -47,31 +76,7 @@ pub fn cached_token_writes(
   query.execute(selection, decode.int)
 }
 
-/// A unique identifier for this LLMTokenUsage.
-pub fn id(self: types.LlmTokenUsage) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
-}
-
-pub fn input_tokens(self: types.LlmTokenUsage) -> Result(Int, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "inputTokens", arguments)
-
-  query.execute(selection, decode.int)
-}
-
-pub fn output_tokens(self: types.LlmTokenUsage) -> Result(Int, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "outputTokens", arguments)
-
-  query.execute(selection, decode.int)
-}
-
+/// Total tokens consumed, as reported by the provider.
 pub fn total_tokens(self: types.LlmTokenUsage) -> Result(Int, DaggerError) {
   let arguments = []
 

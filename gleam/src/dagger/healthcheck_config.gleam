@@ -31,6 +31,15 @@ pub fn codec() -> codec.Codec(types.HealthcheckConfig) {
   )
 }
 
+/// A unique identifier for this HealthcheckConfig.
+pub fn id(self: types.HealthcheckConfig) -> Result(types.Id, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "id", arguments)
+
+  query.execute(selection, types.decode_id())
+}
+
 /// Healthcheck command arguments.
 pub fn args(
   self: types.HealthcheckConfig,
@@ -42,33 +51,6 @@ pub fn args(
   query.execute(selection, decode.list(decode.string))
 }
 
-/// A unique identifier for this HealthcheckConfig.
-pub fn id(self: types.HealthcheckConfig) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
-}
-
-/// Interval between running healthcheck. Example:30s
-pub fn interval(self: types.HealthcheckConfig) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "interval", arguments)
-
-  query.execute(selection, decode.string)
-}
-
-/// The maximum number of consecutive failures before the container is marked as unhealthy. Example:3
-pub fn retries(self: types.HealthcheckConfig) -> Result(Int, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "retries", arguments)
-
-  query.execute(selection, decode.int)
-}
-
 /// Healthcheck command is a shell command.
 pub fn shell(self: types.HealthcheckConfig) -> Result(Bool, DaggerError) {
   let arguments = []
@@ -78,13 +60,20 @@ pub fn shell(self: types.HealthcheckConfig) -> Result(Bool, DaggerError) {
   query.execute(selection, decode.bool)
 }
 
-/// StartInterval configures the duration between checks during the startup phase. Example:5s
-pub fn start_interval(
-  self: types.HealthcheckConfig,
-) -> Result(String, DaggerError) {
+/// Healthcheck timeout. Example:3s
+pub fn timeout(self: types.HealthcheckConfig) -> Result(String, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "startInterval", arguments)
+  let selection = query.select(self.selection, "timeout", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// Interval between running healthcheck. Example:30s
+pub fn interval(self: types.HealthcheckConfig) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "interval", arguments)
 
   query.execute(selection, decode.string)
 }
@@ -100,11 +89,22 @@ pub fn start_period(
   query.execute(selection, decode.string)
 }
 
-/// Healthcheck timeout. Example:3s
-pub fn timeout(self: types.HealthcheckConfig) -> Result(String, DaggerError) {
+/// StartInterval configures the duration between checks during the startup phase. Example:5s
+pub fn start_interval(
+  self: types.HealthcheckConfig,
+) -> Result(String, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "timeout", arguments)
+  let selection = query.select(self.selection, "startInterval", arguments)
 
   query.execute(selection, decode.string)
+}
+
+/// The maximum number of consecutive failures before the container is marked as unhealthy. Example:3
+pub fn retries(self: types.HealthcheckConfig) -> Result(Int, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "retries", arguments)
+
+  query.execute(selection, decode.int)
 }

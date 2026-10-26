@@ -27,15 +27,6 @@ pub fn codec() -> codec.Codec(types.EnumTypeDef) {
   )
 }
 
-/// A doc string for the enum, if any.
-pub fn description(self: types.EnumTypeDef) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "description", arguments)
-
-  query.execute(selection, decode.string)
-}
-
 /// A unique identifier for this EnumTypeDef.
 pub fn id(self: types.EnumTypeDef) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -43,6 +34,26 @@ pub fn id(self: types.EnumTypeDef) -> Result(types.Id, DaggerError) {
   let selection = query.select(self.selection, "id", arguments)
 
   query.execute(selection, types.decode_id())
+}
+
+/// The members of the enum.
+/// Deprecated: use members instead
+pub fn values(
+  self: types.EnumTypeDef,
+) -> Result(List(types.EnumValueTypeDef), DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "values", arguments)
+
+  query.execute_with_children(
+    selection,
+    "id",
+    decode.list(
+      decode.map(decode.at(["id"], decode.string), fn(id) {
+        types.EnumValueTypeDef(query.load(selection, "EnumValueTypeDef", id))
+      }),
+    ),
+  )
 }
 
 /// The members of the enum.
@@ -73,6 +84,15 @@ pub fn name(self: types.EnumTypeDef) -> Result(String, DaggerError) {
   query.execute(selection, decode.string)
 }
 
+/// A doc string for the enum, if any.
+pub fn description(self: types.EnumTypeDef) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "description", arguments)
+
+  query.execute(selection, decode.string)
+}
+
 /// The location of this enum declaration.
 pub fn source_map(self: types.EnumTypeDef) -> types.SourceMap {
   let arguments = []
@@ -91,23 +111,4 @@ pub fn source_module_name(
   let selection = query.select(self.selection, "sourceModuleName", arguments)
 
   query.execute(selection, decode.string)
-}
-
-/// Deprecated: use members instead
-pub fn values(
-  self: types.EnumTypeDef,
-) -> Result(List(types.EnumValueTypeDef), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "values", arguments)
-
-  query.execute_with_children(
-    selection,
-    "id",
-    decode.list(
-      decode.map(decode.at(["id"], decode.string), fn(id) {
-        types.EnumValueTypeDef(query.load(selection, "EnumValueTypeDef", id))
-      }),
-    ),
-  )
 }

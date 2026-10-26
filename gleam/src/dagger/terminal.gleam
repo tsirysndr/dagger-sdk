@@ -37,7 +37,7 @@ pub fn id(self: types.Terminal) -> Result(types.Id, DaggerError) {
 }
 
 /// Forces evaluation of the pipeline in the engine.
-/// 
+///
 /// It doesn't run the default command if no exec has been set.
 pub fn sync(self: types.Terminal) -> Result(types.Terminal, DaggerError) {
   let arguments = []

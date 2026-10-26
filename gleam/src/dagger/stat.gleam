@@ -29,17 +29,6 @@ pub fn codec() -> codec.Codec(types.Stat) {
   )
 }
 
-/// file type
-pub fn file_type(
-  self: types.Stat,
-) -> Result(Option(types.FileType), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "fileType", arguments)
-
-  query.execute(selection, decode.optional(types.decode_file_type()))
-}
-
 /// A unique identifier for this Stat.
 pub fn id(self: types.Stat) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -47,6 +36,15 @@ pub fn id(self: types.Stat) -> Result(types.Id, DaggerError) {
   let selection = query.select(self.selection, "id", arguments)
 
   query.execute(selection, types.decode_id())
+}
+
+/// file size
+pub fn size(self: types.Stat) -> Result(Int, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "size", arguments)
+
+  query.execute(selection, decode.int)
 }
 
 /// file name
@@ -58,20 +56,22 @@ pub fn name(self: types.Stat) -> Result(String, DaggerError) {
   query.execute(selection, decode.string)
 }
 
+/// file type
+pub fn file_type(
+  self: types.Stat,
+) -> Result(Option(types.FileType), DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "fileType", arguments)
+
+  query.execute(selection, decode.optional(types.decode_file_type()))
+}
+
 /// permission bits
 pub fn permissions(self: types.Stat) -> Result(Int, DaggerError) {
   let arguments = []
 
   let selection = query.select(self.selection, "permissions", arguments)
-
-  query.execute(selection, decode.int)
-}
-
-/// file size
-pub fn size(self: types.Stat) -> Result(Int, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "size", arguments)
 
   query.execute(selection, decode.int)
 }

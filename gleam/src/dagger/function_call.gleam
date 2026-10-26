@@ -38,6 +38,63 @@ pub fn id(self: types.FunctionCall) -> Result(types.Id, DaggerError) {
   query.execute(selection, types.decode_id())
 }
 
+/// Set the return value of the function call to the provided value.
+pub fn return_value(
+  self: types.FunctionCall,
+  value: types.Json,
+) -> Result(Option(Nil), DaggerError) {
+  let arguments = [#("value", types.encode_json(value))]
+
+  let selection = query.select(self.selection, "returnValue", arguments)
+
+  query.execute(
+    selection,
+    decode.optional(decode.map(decode.dynamic, fn(_) { Nil })),
+  )
+}
+
+/// Return an error from the function.
+pub fn return_error(
+  self: types.FunctionCall,
+  error: types.Error,
+) -> Result(Option(Nil), DaggerError) {
+  let arguments = [#("error", query.Reference(error.selection))]
+
+  let selection = query.select(self.selection, "returnError", arguments)
+
+  query.execute(
+    selection,
+    decode.optional(decode.map(decode.dynamic, fn(_) { Nil })),
+  )
+}
+
+/// The name of the function being called.
+pub fn name(self: types.FunctionCall) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "name", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// The name of the parent object of the function being called. If the function is top-level to the module, this is the name of the module.
+pub fn parent_name(self: types.FunctionCall) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "parentName", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// The value of the parent object of the function being called. If the function is top-level to the module, this is always an empty object.
+pub fn parent(self: types.FunctionCall) -> Result(types.Json, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "parent", arguments)
+
+  query.execute(selection, types.decode_json())
+}
+
 /// The argument values the function is being invoked with.
 pub fn input_args(
   self: types.FunctionCall,
@@ -58,62 +115,5 @@ pub fn input_args(
         ))
       }),
     ),
-  )
-}
-
-/// The name of the function being called.
-pub fn name(self: types.FunctionCall) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "name", arguments)
-
-  query.execute(selection, decode.string)
-}
-
-/// The value of the parent object of the function being called. If the function is top-level to the module, this is always an empty object.
-pub fn parent(self: types.FunctionCall) -> Result(types.Json, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "parent", arguments)
-
-  query.execute(selection, types.decode_json())
-}
-
-/// The name of the parent object of the function being called. If the function is top-level to the module, this is the name of the module.
-pub fn parent_name(self: types.FunctionCall) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "parentName", arguments)
-
-  query.execute(selection, decode.string)
-}
-
-/// Return an error from the function.
-pub fn return_error(
-  self: types.FunctionCall,
-  error: types.Error,
-) -> Result(Option(Nil), DaggerError) {
-  let arguments = [#("error", query.Reference(error.selection))]
-
-  let selection = query.select(self.selection, "returnError", arguments)
-
-  query.execute(
-    selection,
-    decode.optional(decode.map(decode.dynamic, fn(_) { Nil })),
-  )
-}
-
-/// Set the return value of the function call to the provided value.
-pub fn return_value(
-  self: types.FunctionCall,
-  value: types.Json,
-) -> Result(Option(Nil), DaggerError) {
-  let arguments = [#("value", types.encode_json(value))]
-
-  let selection = query.select(self.selection, "returnValue", arguments)
-
-  query.execute(
-    selection,
-    decode.optional(decode.map(decode.dynamic, fn(_) { Nil })),
   )
 }

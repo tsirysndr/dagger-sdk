@@ -29,22 +29,40 @@ pub fn codec() -> codec.Codec(types.FunctionArg) {
   )
 }
 
-/// Only applies to arguments of type Container. If the argument is not set, load it from the given address (e.g. alpine:latest)
-pub fn default_address(self: types.FunctionArg) -> Result(String, DaggerError) {
+/// A unique identifier for this FunctionArg.
+pub fn id(self: types.FunctionArg) -> Result(types.Id, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "defaultAddress", arguments)
+  let selection = query.select(self.selection, "id", arguments)
+
+  query.execute(selection, types.decode_id())
+}
+
+/// The name of the argument in lowerCamelCase format.
+pub fn name(self: types.FunctionArg) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "name", arguments)
 
   query.execute(selection, decode.string)
 }
 
-/// Only applies to arguments of type File or Directory. If the argument is not set, load it from the given path in the context directory
-pub fn default_path(self: types.FunctionArg) -> Result(String, DaggerError) {
+/// A doc string for the argument, if any.
+pub fn description(self: types.FunctionArg) -> Result(String, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "defaultPath", arguments)
+  let selection = query.select(self.selection, "description", arguments)
 
   query.execute(selection, decode.string)
+}
+
+/// The location of this arg declaration.
+pub fn source_map(self: types.FunctionArg) -> types.SourceMap {
+  let arguments = []
+
+  let selection = query.select(self.selection, "sourceMap", arguments)
+
+  types.SourceMap(selection)
 }
 
 /// A default value to use for this argument when not explicitly set by the caller, if any.
@@ -58,33 +76,22 @@ pub fn default_value(
   query.execute(selection, types.decode_json())
 }
 
-/// The reason this function is deprecated, if any.
-pub fn deprecated(
-  self: types.FunctionArg,
-) -> Result(Option(String), DaggerError) {
+/// Only applies to arguments of type File or Directory. If the argument is not set, load it from the given path in the context directory
+pub fn default_path(self: types.FunctionArg) -> Result(String, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "deprecated", arguments)
-
-  query.execute(selection, decode.optional(decode.string))
-}
-
-/// A doc string for the argument, if any.
-pub fn description(self: types.FunctionArg) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "description", arguments)
+  let selection = query.select(self.selection, "defaultPath", arguments)
 
   query.execute(selection, decode.string)
 }
 
-/// A unique identifier for this FunctionArg.
-pub fn id(self: types.FunctionArg) -> Result(types.Id, DaggerError) {
+/// Only applies to arguments of type Container. If the argument is not set, load it from the given address (e.g. alpine:latest)
+pub fn default_address(self: types.FunctionArg) -> Result(String, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "id", arguments)
+  let selection = query.select(self.selection, "defaultAddress", arguments)
 
-  query.execute(selection, types.decode_id())
+  query.execute(selection, decode.string)
 }
 
 /// Only applies to arguments of type Directory. The ignore patterns are applied to the input directory, and matching entries are filtered out, in a cache-efficient manner.
@@ -96,22 +103,15 @@ pub fn ignore(self: types.FunctionArg) -> Result(List(String), DaggerError) {
   query.execute(selection, decode.list(decode.string))
 }
 
-/// The name of the argument in lowerCamelCase format.
-pub fn name(self: types.FunctionArg) -> Result(String, DaggerError) {
+/// The reason this function is deprecated, if any.
+pub fn deprecated(
+  self: types.FunctionArg,
+) -> Result(Option(String), DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "name", arguments)
+  let selection = query.select(self.selection, "deprecated", arguments)
 
-  query.execute(selection, decode.string)
-}
-
-/// The location of this arg declaration.
-pub fn source_map(self: types.FunctionArg) -> types.SourceMap {
-  let arguments = []
-
-  let selection = query.select(self.selection, "sourceMap", arguments)
-
-  types.SourceMap(selection)
+  query.execute(selection, decode.optional(decode.string))
 }
 
 /// The type of the argument.

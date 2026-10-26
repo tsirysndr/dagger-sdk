@@ -29,50 +29,13 @@ pub fn codec() -> codec.Codec(types.JsonValue) {
   )
 }
 
-/// Decode an array from json
-pub fn as_array(
-  self: types.JsonValue,
-) -> Result(List(types.JsonValue), DaggerError) {
+/// A unique identifier for this JSONValue.
+pub fn id(self: types.JsonValue) -> Result(types.Id, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "asArray", arguments)
+  let selection = query.select(self.selection, "id", arguments)
 
-  query.execute_with_children(
-    selection,
-    "id",
-    decode.list(
-      decode.map(decode.at(["id"], decode.string), fn(id) {
-        types.JsonValue(query.load(selection, "JSONValue", id))
-      }),
-    ),
-  )
-}
-
-/// Decode a boolean from json
-pub fn as_boolean(self: types.JsonValue) -> Result(Bool, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "asBoolean", arguments)
-
-  query.execute(selection, decode.bool)
-}
-
-/// Decode an integer from json
-pub fn as_integer(self: types.JsonValue) -> Result(Int, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "asInteger", arguments)
-
-  query.execute(selection, decode.int)
-}
-
-/// Decode a string from json
-pub fn as_string(self: types.JsonValue) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "asString", arguments)
-
-  query.execute(selection, decode.string)
+  query.execute(selection, types.decode_id())
 }
 
 pub type ContentsOption {
@@ -111,40 +74,14 @@ pub fn contents_with(
   query.execute(selection, types.decode_json())
 }
 
-/// Lookup the field at the given path, and return its value.
-pub fn field(self: types.JsonValue, path: List(String)) -> types.JsonValue {
-  let arguments = [
-    #("path", query.List(list.map(path, fn(item) { query.String(item) }))),
-  ]
+/// Return a new json value, decoded from the given content
+pub fn with_contents(
+  self: types.JsonValue,
+  contents: types.Json,
+) -> types.JsonValue {
+  let arguments = [#("contents", types.encode_json(contents))]
 
-  let selection = query.select(self.selection, "field", arguments)
-
-  types.JsonValue(selection)
-}
-
-/// List fields of the encoded object
-pub fn fields(self: types.JsonValue) -> Result(List(String), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "fields", arguments)
-
-  query.execute(selection, decode.list(decode.string))
-}
-
-/// A unique identifier for this JSONValue.
-pub fn id(self: types.JsonValue) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
-}
-
-/// Encode a boolean to json
-pub fn new_boolean(self: types.JsonValue, value: Bool) -> types.JsonValue {
-  let arguments = [#("value", query.Boolean(value))]
-
-  let selection = query.select(self.selection, "newBoolean", arguments)
+  let selection = query.select(self.selection, "withContents", arguments)
 
   types.JsonValue(selection)
 }
@@ -158,6 +95,15 @@ pub fn new_integer(self: types.JsonValue, value: Int) -> types.JsonValue {
   types.JsonValue(selection)
 }
 
+/// Decode an integer from json
+pub fn as_integer(self: types.JsonValue) -> Result(Int, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "asInteger", arguments)
+
+  query.execute(selection, decode.int)
+}
+
 /// Encode a string to json
 pub fn new_string(self: types.JsonValue, value: String) -> types.JsonValue {
   let arguments = [#("value", query.String(value))]
@@ -167,14 +113,68 @@ pub fn new_string(self: types.JsonValue, value: String) -> types.JsonValue {
   types.JsonValue(selection)
 }
 
-/// Return a new json value, decoded from the given content
-pub fn with_contents(
-  self: types.JsonValue,
-  contents: types.Json,
-) -> types.JsonValue {
-  let arguments = [#("contents", types.encode_json(contents))]
+/// Decode a string from json
+pub fn as_string(self: types.JsonValue) -> Result(String, DaggerError) {
+  let arguments = []
 
-  let selection = query.select(self.selection, "withContents", arguments)
+  let selection = query.select(self.selection, "asString", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// Encode a boolean to json
+pub fn new_boolean(self: types.JsonValue, value: Bool) -> types.JsonValue {
+  let arguments = [#("value", query.Boolean(value))]
+
+  let selection = query.select(self.selection, "newBoolean", arguments)
+
+  types.JsonValue(selection)
+}
+
+/// Decode a boolean from json
+pub fn as_boolean(self: types.JsonValue) -> Result(Bool, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "asBoolean", arguments)
+
+  query.execute(selection, decode.bool)
+}
+
+/// Decode an array from json
+pub fn as_array(
+  self: types.JsonValue,
+) -> Result(List(types.JsonValue), DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "asArray", arguments)
+
+  query.execute_with_children(
+    selection,
+    "id",
+    decode.list(
+      decode.map(decode.at(["id"], decode.string), fn(id) {
+        types.JsonValue(query.load(selection, "JSONValue", id))
+      }),
+    ),
+  )
+}
+
+/// List fields of the encoded object
+pub fn fields(self: types.JsonValue) -> Result(List(String), DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "fields", arguments)
+
+  query.execute(selection, decode.list(decode.string))
+}
+
+/// Lookup the field at the given path, and return its value.
+pub fn field(self: types.JsonValue, path: List(String)) -> types.JsonValue {
+  let arguments = [
+    #("path", query.List(list.map(path, fn(item) { query.String(item) }))),
+  ]
+
+  let selection = query.select(self.selection, "field", arguments)
 
   types.JsonValue(selection)
 }

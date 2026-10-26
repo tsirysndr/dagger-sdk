@@ -29,15 +29,6 @@ pub fn codec() -> codec.Codec(types.GeneratedCode) {
   )
 }
 
-/// The directory containing the generated code.
-pub fn code(self: types.GeneratedCode) -> types.Directory {
-  let arguments = []
-
-  let selection = query.select(self.selection, "code", arguments)
-
-  types.Directory(selection)
-}
-
 /// A unique identifier for this GeneratedCode.
 pub fn id(self: types.GeneratedCode) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -45,28 +36,6 @@ pub fn id(self: types.GeneratedCode) -> Result(types.Id, DaggerError) {
   let selection = query.select(self.selection, "id", arguments)
 
   query.execute(selection, types.decode_id())
-}
-
-/// List of paths to mark generated in version control (i.e. .gitattributes).
-pub fn vcs_generated_paths(
-  self: types.GeneratedCode,
-) -> Result(List(String), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "vcsGeneratedPaths", arguments)
-
-  query.execute(selection, decode.list(decode.string))
-}
-
-/// List of paths to ignore in version control (i.e. .gitignore).
-pub fn vcs_ignored_paths(
-  self: types.GeneratedCode,
-) -> Result(List(String), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "vcsIgnoredPaths", arguments)
-
-  query.execute(selection, decode.list(decode.string))
 }
 
 /// Set the list of paths to mark generated in version control.
@@ -96,4 +65,35 @@ pub fn with_vcs_ignored_paths(
   let selection = query.select(self.selection, "withVCSIgnoredPaths", arguments)
 
   types.GeneratedCode(selection)
+}
+
+/// The directory containing the generated code.
+pub fn code(self: types.GeneratedCode) -> types.Directory {
+  let arguments = []
+
+  let selection = query.select(self.selection, "code", arguments)
+
+  types.Directory(selection)
+}
+
+/// List of paths to mark generated in version control (i.e. .gitattributes).
+pub fn vcs_generated_paths(
+  self: types.GeneratedCode,
+) -> Result(List(String), DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "vcsGeneratedPaths", arguments)
+
+  query.execute(selection, decode.list(decode.string))
+}
+
+/// List of paths to ignore in version control (i.e. .gitignore).
+pub fn vcs_ignored_paths(
+  self: types.GeneratedCode,
+) -> Result(List(String), DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "vcsIgnoredPaths", arguments)
+
+  query.execute(selection, decode.list(decode.string))
 }

@@ -31,15 +31,13 @@ pub fn codec() -> codec.Codec(types.ModuleConfigClient) {
   )
 }
 
-/// The directory the client is generated in.
-pub fn directory(
-  self: types.ModuleConfigClient,
-) -> Result(String, DaggerError) {
+/// A unique identifier for this ModuleConfigClient.
+pub fn id(self: types.ModuleConfigClient) -> Result(types.Id, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "directory", arguments)
+  let selection = query.select(self.selection, "id", arguments)
 
-  query.execute(selection, decode.string)
+  query.execute(selection, types.decode_id())
 }
 
 /// The generator to use
@@ -53,11 +51,13 @@ pub fn generator(
   query.execute(selection, decode.string)
 }
 
-/// A unique identifier for this ModuleConfigClient.
-pub fn id(self: types.ModuleConfigClient) -> Result(types.Id, DaggerError) {
+/// The directory the client is generated in.
+pub fn directory(
+  self: types.ModuleConfigClient,
+) -> Result(String, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "id", arguments)
+  let selection = query.select(self.selection, "directory", arguments)
 
-  query.execute(selection, types.decode_id())
+  query.execute(selection, decode.string)
 }

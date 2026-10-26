@@ -8,6 +8,8 @@ import dagger/errors.{type Error as DaggerError}
 
 import gleam/dynamic/decode
 
+import gleam/option.{type Option}
+
 pub type Check =
   types.Check
 
@@ -27,33 +29,6 @@ pub fn codec() -> codec.Codec(types.Check) {
   )
 }
 
-/// Whether the check completed
-pub fn completed(self: types.Check) -> Result(Bool, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "completed", arguments)
-
-  query.execute(selection, decode.bool)
-}
-
-/// The description of the check
-pub fn description(self: types.Check) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "description", arguments)
-
-  query.execute(selection, decode.string)
-}
-
-/// If the check failed, this is the error
-pub fn error(self: types.Check) -> types.Error {
-  let arguments = []
-
-  let selection = query.select(self.selection, "error", arguments)
-
-  types.Error(selection)
-}
-
 /// A unique identifier for this Check.
 pub fn id(self: types.Check) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -63,56 +38,47 @@ pub fn id(self: types.Check) -> Result(types.Id, DaggerError) {
   query.execute(selection, types.decode_id())
 }
 
-/// Return the fully qualified name of the check
-pub fn name(self: types.Check) -> Result(String, DaggerError) {
+/// Run the check and retain its result.
+pub fn sync(self: types.Check) -> types.Check {
   let arguments = []
 
-  let selection = query.select(self.selection, "name", arguments)
+  let selection = query.select(self.selection, "sync", arguments)
 
-  query.execute(selection, decode.string)
+  types.Check(selection)
 }
 
-/// The original module in which the check has been defined
-pub fn original_module(self: types.Check) -> types.Module {
+/// Run the check and return whether it passes.
+pub fn pass(self: types.Check) -> Result(Bool, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "originalModule", arguments)
-
-  types.Module(selection)
-}
-
-/// Whether the check passed
-pub fn passed(self: types.Check) -> Result(Bool, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "passed", arguments)
+  let selection = query.select(self.selection, "pass", arguments)
 
   query.execute(selection, decode.bool)
 }
 
-/// The path of the check within its module
-pub fn path(self: types.Check) -> Result(List(String), DaggerError) {
+/// Run the check and return its failure, if any.
+pub fn error(self: types.Check) -> types.Error {
   let arguments = []
 
-  let selection = query.select(self.selection, "path", arguments)
+  let selection = query.select(self.selection, "error", arguments)
 
-  query.execute(selection, decode.list(decode.string))
+  types.Error(selection)
 }
 
-/// An emoji representing the result of the check
-pub fn result_emoji(self: types.Check) -> Result(String, DaggerError) {
+/// The assertion that is false when this check fails.
+pub fn assertion(self: types.Check) -> Result(Option(String), DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "resultEmoji", arguments)
+  let selection = query.select(self.selection, "assertion", arguments)
 
-  query.execute(selection, decode.string)
+  query.execute(selection, decode.optional(decode.string))
 }
 
-/// Execute the check
-pub fn run(self: types.Check) -> types.Check {
+/// An optional report produced by the check.
+pub fn report(self: types.Check) -> types.Directory {
   let arguments = []
 
-  let selection = query.select(self.selection, "run", arguments)
+  let selection = query.select(self.selection, "report", arguments)
 
-  types.Check(selection)
+  types.Directory(selection)
 }

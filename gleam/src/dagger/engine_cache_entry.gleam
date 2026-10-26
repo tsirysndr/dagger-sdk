@@ -31,26 +31,13 @@ pub fn codec() -> codec.Codec(types.EngineCacheEntry) {
   )
 }
 
-/// Whether the cache entry is actively being used.
-pub fn actively_used(
-  self: types.EngineCacheEntry,
-) -> Result(Bool, DaggerError) {
+/// A unique identifier for this EngineCacheEntry.
+pub fn id(self: types.EngineCacheEntry) -> Result(types.Id, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "activelyUsed", arguments)
+  let selection = query.select(self.selection, "id", arguments)
 
-  query.execute(selection, decode.bool)
-}
-
-/// The time the cache entry was created, in Unix nanoseconds.
-pub fn created_time_unix_nano(
-  self: types.EngineCacheEntry,
-) -> Result(Int, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "createdTimeUnixNano", arguments)
-
-  query.execute(selection, decode.int)
+  query.execute(selection, types.decode_id())
 }
 
 /// The description of the cache entry.
@@ -75,13 +62,15 @@ pub fn disk_space_bytes(
   query.execute(selection, decode.int)
 }
 
-/// A unique identifier for this EngineCacheEntry.
-pub fn id(self: types.EngineCacheEntry) -> Result(types.Id, DaggerError) {
+/// The time the cache entry was created, in Unix nanoseconds.
+pub fn created_time_unix_nano(
+  self: types.EngineCacheEntry,
+) -> Result(Int, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "id", arguments)
+  let selection = query.select(self.selection, "createdTimeUnixNano", arguments)
 
-  query.execute(selection, types.decode_id())
+  query.execute(selection, decode.int)
 }
 
 /// The most recent time the cache entry was used, in Unix nanoseconds.
@@ -96,6 +85,17 @@ pub fn most_recent_use_time_unix_nano(
   query.execute(selection, decode.int)
 }
 
+/// Whether the cache entry is actively being used.
+pub fn actively_used(
+  self: types.EngineCacheEntry,
+) -> Result(Bool, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "activelyUsed", arguments)
+
+  query.execute(selection, decode.bool)
+}
+
 /// The type of the cache record (e.g. regular, internal, frontend, source.local, source.git.checkout, exec.cachemount).
 pub fn record_type(
   self: types.EngineCacheEntry,
@@ -103,6 +103,26 @@ pub fn record_type(
   let arguments = []
 
   let selection = query.select(self.selection, "recordType", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// The storage record types represented by this cache entry.
+pub fn record_types(
+  self: types.EngineCacheEntry,
+) -> Result(List(String), DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "recordTypes", arguments)
+
+  query.execute(selection, decode.list(decode.string))
+}
+
+/// The DagQL call that produced this cache entry.
+pub fn dagql_call(self: types.EngineCacheEntry) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "dagqlCall", arguments)
 
   query.execute(selection, decode.string)
 }

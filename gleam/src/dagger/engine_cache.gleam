@@ -31,6 +31,15 @@ pub fn codec() -> codec.Codec(types.EngineCache) {
   )
 }
 
+/// A unique identifier for this EngineCache.
+pub fn id(self: types.EngineCache) -> Result(types.Id, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "id", arguments)
+
+  query.execute(selection, types.decode_id())
+}
+
 pub type EntrySetOption {
   EntrySetKey(String)
 }
@@ -62,35 +71,8 @@ pub fn entry_set_with(
   types.EngineCacheEntrySet(selection)
 }
 
-/// A unique identifier for this EngineCache.
-pub fn id(self: types.EngineCache) -> Result(types.Id, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "id", arguments)
-
-  query.execute(selection, types.decode_id())
-}
-
-/// The maximum bytes to keep in the cache without pruning.
-pub fn max_used_space(self: types.EngineCache) -> Result(Int, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "maxUsedSpace", arguments)
-
-  query.execute(selection, decode.int)
-}
-
-/// The target amount of free disk space the garbage collector will attempt to leave.
-pub fn min_free_space(self: types.EngineCache) -> Result(Int, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "minFreeSpace", arguments)
-
-  query.execute(selection, decode.int)
-}
-
 pub type PruneOption {
-  /// Use the engine-wide default pruning policy if true, otherwise prune the whole cache of any releasable entries.
+  /// Use enabled engine-wide default disk and structural policies. If no default disk policy is enabled, the disk stage falls back to pruning all releasable disk-cache entries. If false, explicit options select stages; with no options, all releasable disk-cache entries are pruned.
   PruneUseDefaultPolicy(Bool)
   /// Override the maximum disk space to keep before pruning (e.g. "200GB" or "80%").
   PruneMaxUsedSpace(String)
@@ -100,6 +82,10 @@ pub type PruneOption {
   PruneMinFreeSpace(String)
   /// Override the target disk space to keep after pruning (e.g. "200GB" or "50%").
   PruneTargetSpace(String)
+  /// Override the maximum structural metadata estimate in absolute bytes. Explicit values must be positive; the configured/default value is used when omitted.
+  PruneMaxEstimatedBytes(Int)
+  /// Override the structural metadata estimate to target in absolute bytes. Explicit values must be positive and lower than the resolved maximum; the configured/default value is used when omitted.
+  PruneTargetEstimatedBytes(Int)
 }
 
 /// Prune the cache of releaseable entries
@@ -131,6 +117,16 @@ pub fn prune_with(
           PruneMinFreeSpace(value) -> #("minFreeSpace", query.String(value))
 
           PruneTargetSpace(value) -> #("targetSpace", query.String(value))
+
+          PruneMaxEstimatedBytes(value) -> #(
+            "maxEstimatedBytes",
+            query.Int(value),
+          )
+
+          PruneTargetEstimatedBytes(value) -> #(
+            "targetEstimatedBytes",
+            query.Int(value),
+          )
         }
       }),
     )
@@ -143,11 +139,11 @@ pub fn prune_with(
   )
 }
 
-/// The minimum amount of disk space this policy is guaranteed to retain.
-pub fn reserved_space(self: types.EngineCache) -> Result(Int, DaggerError) {
+/// The maximum bytes to keep in the cache without pruning.
+pub fn max_used_space(self: types.EngineCache) -> Result(Int, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "reservedSpace", arguments)
+  let selection = query.select(self.selection, "maxUsedSpace", arguments)
 
   query.execute(selection, decode.int)
 }
@@ -157,6 +153,24 @@ pub fn target_space(self: types.EngineCache) -> Result(Int, DaggerError) {
   let arguments = []
 
   let selection = query.select(self.selection, "targetSpace", arguments)
+
+  query.execute(selection, decode.int)
+}
+
+/// The minimum amount of disk space this policy is guaranteed to retain.
+pub fn reserved_space(self: types.EngineCache) -> Result(Int, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "reservedSpace", arguments)
+
+  query.execute(selection, decode.int)
+}
+
+/// The target amount of free disk space the garbage collector will attempt to leave.
+pub fn min_free_space(self: types.EngineCache) -> Result(Int, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "minFreeSpace", arguments)
 
   query.execute(selection, decode.int)
 }

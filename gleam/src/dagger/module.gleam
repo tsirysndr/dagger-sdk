@@ -31,48 +31,36 @@ pub fn codec() -> codec.Codec(types.Module) {
   )
 }
 
-/// Return the check defined by the module with the given name. Must match to exactly one check.
-pub fn check(self: types.Module, name: String) -> types.Check {
-  let arguments = [#("name", query.String(name))]
-
-  let selection = query.select(self.selection, "check", arguments)
-
-  types.Check(selection)
-}
-
-pub type ChecksOption {
-  /// Only include checks matching the specified patterns
-  ChecksInclude(List(String))
-}
-
-/// Return all checks defined by the module
-pub fn checks(self: types.Module) -> types.CheckGroup {
-  checks_with(self, [])
-}
-
-/// Return all checks defined by the module
-pub fn checks_with(
-  self: types.Module,
-  options: List(ChecksOption),
-) -> types.CheckGroup {
+/// A unique identifier for this Module.
+pub fn id(self: types.Module) -> Result(types.Id, DaggerError) {
   let arguments = []
 
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          ChecksInclude(value) -> #(
-            "include",
-            query.List(list.map(value, fn(item) { query.String(item) })),
-          )
-        }
-      }),
-    )
+  let selection = query.select(self.selection, "id", arguments)
 
-  let selection = query.select(self.selection, "checks", arguments)
+  query.execute(selection, types.decode_id())
+}
 
-  types.CheckGroup(selection)
+/// The source used to resolve contextual files and directories, when different from source.
+pub fn context_source(self: types.Module) -> types.ModuleSource {
+  let arguments = []
+
+  let selection = query.select(self.selection, "contextSource", arguments)
+
+  types.ModuleSource(selection)
+}
+
+/// Forces evaluation of the module, including any loading into the engine and associated validation.
+pub fn sync(self: types.Module) -> Result(types.Module, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "sync", arguments)
+
+  query.execute(
+    selection,
+    decode.map(decode.string, fn(id) {
+      types.Module(query.load(selection, "Module", id))
+    }),
+  )
 }
 
 /// The dependencies of the module.
@@ -94,30 +82,18 @@ pub fn dependencies(
   )
 }
 
-/// The doc string of the module, if any
-pub fn description(self: types.Module) -> Result(String, DaggerError) {
+/// The introspection schema JSON file for this module.
+///
+/// This file represents the schema visible to the module's source code, including all core types and those from the dependencies.
+///
+/// Note: this is in the context of a module, so some core types may be hidden.
+pub fn introspection_schema_json(self: types.Module) -> types.File {
   let arguments = []
 
-  let selection = query.select(self.selection, "description", arguments)
+  let selection =
+    query.select(self.selection, "introspectionSchemaJSON", arguments)
 
-  query.execute(selection, decode.string)
-}
-
-/// Enumerations served by this module.
-pub fn enums(self: types.Module) -> Result(List(types.TypeDef), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "enums", arguments)
-
-  query.execute_with_children(
-    selection,
-    "id",
-    decode.list(
-      decode.map(decode.at(["id"], decode.string), fn(id) {
-        types.TypeDef(query.load(selection, "TypeDef", id))
-      }),
-    ),
-  )
+  types.File(selection)
 }
 
 /// The generated files and directories made on top of the module source's context directory.
@@ -130,116 +106,55 @@ pub fn generated_context_directory(self: types.Module) -> types.Directory {
   types.Directory(selection)
 }
 
-/// Return the generator defined by the module with the given name. Must match to exactly one generator.
-pub fn generator(self: types.Module, name: String) -> types.Generator {
-  let arguments = [#("name", query.String(name))]
+/// User-defined default values, loaded from local .env files.
+pub fn user_defaults(self: types.Module) -> types.EnvFile {
+  let arguments = []
 
-  let selection = query.select(self.selection, "generator", arguments)
+  let selection = query.select(self.selection, "userDefaults", arguments)
 
-  types.Generator(selection)
+  types.EnvFile(selection)
 }
 
-pub type GeneratorsOption {
-  /// Only include generators matching the specified patterns
-  GeneratorsInclude(List(String))
-}
-
-/// Return all generators defined by the module
-pub fn generators(self: types.Module) -> types.GeneratorGroup {
-  generators_with(self, [])
-}
-
-/// Return all generators defined by the module
-pub fn generators_with(
+/// Retrieves the module with the given description
+pub fn with_description(
   self: types.Module,
-  options: List(GeneratorsOption),
-) -> types.GeneratorGroup {
-  let arguments = []
+  description: String,
+) -> types.Module {
+  let arguments = [#("description", query.String(description))]
 
-  let arguments =
-    list.append(
-      arguments,
-      list.map(options, fn(option) {
-        case option {
-          GeneratorsInclude(value) -> #(
-            "include",
-            query.List(list.map(value, fn(item) { query.String(item) })),
-          )
-        }
-      }),
-    )
+  let selection = query.select(self.selection, "withDescription", arguments)
 
-  let selection = query.select(self.selection, "generators", arguments)
-
-  types.GeneratorGroup(selection)
+  types.Module(selection)
 }
 
-/// A unique identifier for this Module.
-pub fn id(self: types.Module) -> Result(types.Id, DaggerError) {
-  let arguments = []
+/// This module plus the given Object type and associated functions.
+pub fn with_object(self: types.Module, object: types.TypeDef) -> types.Module {
+  let arguments = [#("object", query.Reference(object.selection))]
 
-  let selection = query.select(self.selection, "id", arguments)
+  let selection = query.select(self.selection, "withObject", arguments)
 
-  query.execute(selection, types.decode_id())
+  types.Module(selection)
 }
 
-/// Interfaces served by this module.
-pub fn interfaces(
+/// This module plus the given Interface type and associated functions
+pub fn with_interface(
   self: types.Module,
-) -> Result(List(types.TypeDef), DaggerError) {
-  let arguments = []
+  iface: types.TypeDef,
+) -> types.Module {
+  let arguments = [#("iface", query.Reference(iface.selection))]
 
-  let selection = query.select(self.selection, "interfaces", arguments)
+  let selection = query.select(self.selection, "withInterface", arguments)
 
-  query.execute_with_children(
-    selection,
-    "id",
-    decode.list(
-      decode.map(decode.at(["id"], decode.string), fn(id) {
-        types.TypeDef(query.load(selection, "TypeDef", id))
-      }),
-    ),
-  )
+  types.Module(selection)
 }
 
-/// The introspection schema JSON file for this module.
-/// 
-/// This file represents the schema visible to the module's source code, including all core types and those from the dependencies.
-/// 
-/// Note: this is in the context of a module, so some core types may be hidden.
-pub fn introspection_schema_json(self: types.Module) -> types.File {
-  let arguments = []
+/// This module plus the given Enum type and associated values
+pub fn with_enum(self: types.Module, enum: types.TypeDef) -> types.Module {
+  let arguments = [#("enum", query.Reference(enum.selection))]
 
-  let selection =
-    query.select(self.selection, "introspectionSchemaJSON", arguments)
+  let selection = query.select(self.selection, "withEnum", arguments)
 
-  types.File(selection)
-}
-
-/// The name of the module
-pub fn name(self: types.Module) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "name", arguments)
-
-  query.execute(selection, decode.string)
-}
-
-/// Objects served by this module.
-pub fn objects(self: types.Module) -> Result(List(types.TypeDef), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "objects", arguments)
-
-  query.execute_with_children(
-    selection,
-    "id",
-    decode.list(
-      decode.map(decode.at(["id"], decode.string), fn(id) {
-        types.TypeDef(query.load(selection, "TypeDef", id))
-      }),
-    ),
-  )
+  types.Module(selection)
 }
 
 /// The container that runs the module's entrypoint. It will fail to execute if the module doesn't compile.
@@ -249,15 +164,6 @@ pub fn runtime(self: types.Module) -> types.Container {
   let selection = query.select(self.selection, "runtime", arguments)
 
   types.Container(selection)
-}
-
-/// The SDK config used by this module.
-pub fn sdk(self: types.Module) -> types.SdkConfig {
-  let arguments = []
-
-  let selection = query.select(self.selection, "sdk", arguments)
-
-  types.SdkConfig(selection)
 }
 
 pub type ServeOption {
@@ -270,14 +176,14 @@ pub type ServeOption {
 }
 
 /// Serve a module's API in the current session.
-/// 
+///
 /// Note: this can only be called once per session. In the future, it could return a stream or service to remove the side effect.
 pub fn serve(self: types.Module) -> Result(Option(Nil), DaggerError) {
   serve_with(self, [])
 }
 
 /// Serve a module's API in the current session.
-/// 
+///
 /// Note: this can only be called once per session. In the future, it could return a stream or service to remove the side effect.
 pub fn serve_with(
   self: types.Module,
@@ -319,67 +225,82 @@ pub fn source(self: types.Module) -> types.ModuleSource {
   types.ModuleSource(selection)
 }
 
-/// Forces evaluation of the module, including any loading into the engine and associated validation.
-pub fn sync(self: types.Module) -> Result(types.Module, DaggerError) {
+/// The name of the module
+pub fn name(self: types.Module) -> Result(String, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "sync", arguments)
+  let selection = query.select(self.selection, "name", arguments)
 
-  query.execute(
+  query.execute(selection, decode.string)
+}
+
+/// The SDK config used by this module.
+pub fn sdk(self: types.Module) -> types.SdkConfig {
+  let arguments = []
+
+  let selection = query.select(self.selection, "sdk", arguments)
+
+  types.SdkConfig(selection)
+}
+
+/// The doc string of the module, if any
+pub fn description(self: types.Module) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "description", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// Objects served by this module.
+pub fn objects(self: types.Module) -> Result(List(types.TypeDef), DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "objects", arguments)
+
+  query.execute_with_children(
     selection,
-    decode.map(decode.string, fn(id) {
-      types.Module(query.load(selection, "Module", id))
-    }),
+    "id",
+    decode.list(
+      decode.map(decode.at(["id"], decode.string), fn(id) {
+        types.TypeDef(query.load(selection, "TypeDef", id))
+      }),
+    ),
   )
 }
 
-/// User-defined default values, loaded from local .env files.
-pub fn user_defaults(self: types.Module) -> types.EnvFile {
+/// Interfaces served by this module.
+pub fn interfaces(
+  self: types.Module,
+) -> Result(List(types.TypeDef), DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "userDefaults", arguments)
+  let selection = query.select(self.selection, "interfaces", arguments)
 
-  types.EnvFile(selection)
+  query.execute_with_children(
+    selection,
+    "id",
+    decode.list(
+      decode.map(decode.at(["id"], decode.string), fn(id) {
+        types.TypeDef(query.load(selection, "TypeDef", id))
+      }),
+    ),
+  )
 }
 
-/// Retrieves the module with the given description
-pub fn with_description(
-  self: types.Module,
-  description: String,
-) -> types.Module {
-  let arguments = [#("description", query.String(description))]
+/// Enumerations served by this module.
+pub fn enums(self: types.Module) -> Result(List(types.TypeDef), DaggerError) {
+  let arguments = []
 
-  let selection = query.select(self.selection, "withDescription", arguments)
+  let selection = query.select(self.selection, "enums", arguments)
 
-  types.Module(selection)
-}
-
-/// This module plus the given Enum type and associated values
-pub fn with_enum(self: types.Module, enum: types.TypeDef) -> types.Module {
-  let arguments = [#("enum", query.Reference(enum.selection))]
-
-  let selection = query.select(self.selection, "withEnum", arguments)
-
-  types.Module(selection)
-}
-
-/// This module plus the given Interface type and associated functions
-pub fn with_interface(
-  self: types.Module,
-  iface: types.TypeDef,
-) -> types.Module {
-  let arguments = [#("iface", query.Reference(iface.selection))]
-
-  let selection = query.select(self.selection, "withInterface", arguments)
-
-  types.Module(selection)
-}
-
-/// This module plus the given Object type and associated functions.
-pub fn with_object(self: types.Module, object: types.TypeDef) -> types.Module {
-  let arguments = [#("object", query.Reference(object.selection))]
-
-  let selection = query.select(self.selection, "withObject", arguments)
-
-  types.Module(selection)
+  query.execute_with_children(
+    selection,
+    "id",
+    decode.list(
+      decode.map(decode.at(["id"], decode.string), fn(id) {
+        types.TypeDef(query.load(selection, "TypeDef", id))
+      }),
+    ),
+  )
 }

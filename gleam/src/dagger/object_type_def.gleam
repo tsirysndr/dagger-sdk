@@ -29,13 +29,40 @@ pub fn codec() -> codec.Codec(types.ObjectTypeDef) {
   )
 }
 
-/// The function used to construct new instances of this object, if any
-pub fn constructor(self: types.ObjectTypeDef) -> types.Function {
+/// A unique identifier for this ObjectTypeDef.
+pub fn id(self: types.ObjectTypeDef) -> Result(types.Id, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "constructor", arguments)
+  let selection = query.select(self.selection, "id", arguments)
 
-  types.Function(selection)
+  query.execute(selection, types.decode_id())
+}
+
+/// The name of the object.
+pub fn name(self: types.ObjectTypeDef) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "name", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// The doc string for the object, if any.
+pub fn description(self: types.ObjectTypeDef) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "description", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// The location of this object declaration.
+pub fn source_map(self: types.ObjectTypeDef) -> types.SourceMap {
+  let arguments = []
+
+  let selection = query.select(self.selection, "sourceMap", arguments)
+
+  types.SourceMap(selection)
 }
 
 /// The reason this enum member is deprecated, if any.
@@ -49,11 +76,13 @@ pub fn deprecated(
   query.execute(selection, decode.optional(decode.string))
 }
 
-/// The doc string for the object, if any.
-pub fn description(self: types.ObjectTypeDef) -> Result(String, DaggerError) {
+/// If this ObjectTypeDef is associated with a Module, the name of the module. Unset otherwise.
+pub fn source_module_name(
+  self: types.ObjectTypeDef,
+) -> Result(String, DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "description", arguments)
+  let selection = query.select(self.selection, "sourceModuleName", arguments)
 
   query.execute(selection, decode.string)
 }
@@ -96,40 +125,11 @@ pub fn functions(
   )
 }
 
-/// A unique identifier for this ObjectTypeDef.
-pub fn id(self: types.ObjectTypeDef) -> Result(types.Id, DaggerError) {
+/// The function used to construct new instances of this object, if any.
+pub fn constructor(self: types.ObjectTypeDef) -> types.Function {
   let arguments = []
 
-  let selection = query.select(self.selection, "id", arguments)
+  let selection = query.select(self.selection, "constructor", arguments)
 
-  query.execute(selection, types.decode_id())
-}
-
-/// The name of the object.
-pub fn name(self: types.ObjectTypeDef) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "name", arguments)
-
-  query.execute(selection, decode.string)
-}
-
-/// The location of this object declaration.
-pub fn source_map(self: types.ObjectTypeDef) -> types.SourceMap {
-  let arguments = []
-
-  let selection = query.select(self.selection, "sourceMap", arguments)
-
-  types.SourceMap(selection)
-}
-
-/// If this ObjectTypeDef is associated with a Module, the name of the module. Unset otherwise.
-pub fn source_module_name(
-  self: types.ObjectTypeDef,
-) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "sourceModuleName", arguments)
-
-  query.execute(selection, decode.string)
+  types.Function(selection)
 }

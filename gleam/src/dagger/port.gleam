@@ -29,27 +29,6 @@ pub fn codec() -> codec.Codec(types.Port) {
   )
 }
 
-/// The port description.
-pub fn description(self: types.Port) -> Result(Option(String), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "description", arguments)
-
-  query.execute(selection, decode.optional(decode.string))
-}
-
-/// Skip the health check when run as a service.
-pub fn experimental_skip_healthcheck(
-  self: types.Port,
-) -> Result(Bool, DaggerError) {
-  let arguments = []
-
-  let selection =
-    query.select(self.selection, "experimentalSkipHealthcheck", arguments)
-
-  query.execute(selection, decode.bool)
-}
-
 /// A unique identifier for this Port.
 pub fn id(self: types.Port) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -77,4 +56,25 @@ pub fn protocol(
   let selection = query.select(self.selection, "protocol", arguments)
 
   query.execute(selection, types.decode_network_protocol())
+}
+
+/// The port description.
+pub fn description(self: types.Port) -> Result(Option(String), DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "description", arguments)
+
+  query.execute(selection, decode.optional(decode.string))
+}
+
+/// Skip the health check when run as a service.
+pub fn experimental_skip_healthcheck(
+  self: types.Port,
+) -> Result(Bool, DaggerError) {
+  let arguments = []
+
+  let selection =
+    query.select(self.selection, "experimentalSkipHealthcheck", arguments)
+
+  query.execute(selection, decode.bool)
 }

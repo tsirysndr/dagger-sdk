@@ -27,15 +27,6 @@ pub fn codec() -> codec.Codec(types.ScalarTypeDef) {
   )
 }
 
-/// A doc string for the scalar, if any.
-pub fn description(self: types.ScalarTypeDef) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "description", arguments)
-
-  query.execute(selection, decode.string)
-}
-
 /// A unique identifier for this ScalarTypeDef.
 pub fn id(self: types.ScalarTypeDef) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -50,6 +41,15 @@ pub fn name(self: types.ScalarTypeDef) -> Result(String, DaggerError) {
   let arguments = []
 
   let selection = query.select(self.selection, "name", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// A doc string for the scalar, if any.
+pub fn description(self: types.ScalarTypeDef) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "description", arguments)
 
   query.execute(selection, decode.string)
 }

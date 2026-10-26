@@ -45,20 +45,20 @@ pub fn name(self: types.Secret) -> Result(String, DaggerError) {
   query.execute(selection, decode.string)
 }
 
-/// The value of this secret.
-pub fn plaintext(self: types.Secret) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "plaintext", arguments)
-
-  query.execute(selection, decode.string)
-}
-
 /// The URI of this secret.
 pub fn uri(self: types.Secret) -> Result(String, DaggerError) {
   let arguments = []
 
   let selection = query.select(self.selection, "uri", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// The value of this secret.
+pub fn plaintext(self: types.Secret) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "plaintext", arguments)
 
   query.execute(selection, decode.string)
 }

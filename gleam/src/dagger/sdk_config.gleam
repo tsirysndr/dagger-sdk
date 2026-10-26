@@ -27,15 +27,6 @@ pub fn codec() -> codec.Codec(types.SdkConfig) {
   )
 }
 
-/// Whether to start the SDK runtime in debug mode with an interactive terminal.
-pub fn debug(self: types.SdkConfig) -> Result(Bool, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "debug", arguments)
-
-  query.execute(selection, decode.bool)
-}
-
 /// A unique identifier for this SDKConfig.
 pub fn id(self: types.SdkConfig) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -52,4 +43,13 @@ pub fn source(self: types.SdkConfig) -> Result(String, DaggerError) {
   let selection = query.select(self.selection, "source", arguments)
 
   query.execute(selection, decode.string)
+}
+
+/// Whether to start the SDK runtime in debug mode with an interactive terminal.
+pub fn debug(self: types.SdkConfig) -> Result(Bool, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "debug", arguments)
+
+  query.execute(selection, decode.bool)
 }

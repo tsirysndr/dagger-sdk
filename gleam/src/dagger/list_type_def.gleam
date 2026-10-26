@@ -25,15 +25,6 @@ pub fn codec() -> codec.Codec(types.ListTypeDef) {
   )
 }
 
-/// The type of the elements in the list.
-pub fn element_type_def(self: types.ListTypeDef) -> types.TypeDef {
-  let arguments = []
-
-  let selection = query.select(self.selection, "elementTypeDef", arguments)
-
-  types.TypeDef(selection)
-}
-
 /// A unique identifier for this ListTypeDef.
 pub fn id(self: types.ListTypeDef) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -41,4 +32,13 @@ pub fn id(self: types.ListTypeDef) -> Result(types.Id, DaggerError) {
   let selection = query.select(self.selection, "id", arguments)
 
   query.execute(selection, types.decode_id())
+}
+
+/// The type of the elements in the list.
+pub fn element_type_def(self: types.ListTypeDef) -> types.TypeDef {
+  let arguments = []
+
+  let selection = query.select(self.selection, "elementTypeDef", arguments)
+
+  types.TypeDef(selection)
 }

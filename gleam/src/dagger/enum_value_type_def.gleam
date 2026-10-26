@@ -33,28 +33,6 @@ pub fn codec() -> codec.Codec(types.EnumValueTypeDef) {
   )
 }
 
-/// The reason this enum member is deprecated, if any.
-pub fn deprecated(
-  self: types.EnumValueTypeDef,
-) -> Result(Option(String), DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "deprecated", arguments)
-
-  query.execute(selection, decode.optional(decode.string))
-}
-
-/// A doc string for the enum member, if any.
-pub fn description(
-  self: types.EnumValueTypeDef,
-) -> Result(String, DaggerError) {
-  let arguments = []
-
-  let selection = query.select(self.selection, "description", arguments)
-
-  query.execute(selection, decode.string)
-}
-
 /// A unique identifier for this EnumValueTypeDef.
 pub fn id(self: types.EnumValueTypeDef) -> Result(types.Id, DaggerError) {
   let arguments = []
@@ -73,6 +51,26 @@ pub fn name(self: types.EnumValueTypeDef) -> Result(String, DaggerError) {
   query.execute(selection, decode.string)
 }
 
+/// The value of the enum member
+pub fn value(self: types.EnumValueTypeDef) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "value", arguments)
+
+  query.execute(selection, decode.string)
+}
+
+/// A doc string for the enum member, if any.
+pub fn description(
+  self: types.EnumValueTypeDef,
+) -> Result(String, DaggerError) {
+  let arguments = []
+
+  let selection = query.select(self.selection, "description", arguments)
+
+  query.execute(selection, decode.string)
+}
+
 /// The location of this enum member declaration.
 pub fn source_map(self: types.EnumValueTypeDef) -> types.SourceMap {
   let arguments = []
@@ -82,11 +80,13 @@ pub fn source_map(self: types.EnumValueTypeDef) -> types.SourceMap {
   types.SourceMap(selection)
 }
 
-/// The value of the enum member
-pub fn value(self: types.EnumValueTypeDef) -> Result(String, DaggerError) {
+/// The reason this enum member is deprecated, if any.
+pub fn deprecated(
+  self: types.EnumValueTypeDef,
+) -> Result(Option(String), DaggerError) {
   let arguments = []
 
-  let selection = query.select(self.selection, "value", arguments)
+  let selection = query.select(self.selection, "deprecated", arguments)
 
-  query.execute(selection, decode.string)
+  query.execute(selection, decode.optional(decode.string))
 }
