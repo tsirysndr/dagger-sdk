@@ -7,7 +7,7 @@ if (!moduleName) throw new Error("Usage: init-module.mjs <dagger-module-name>");
 const objectName = moduleName.split(/[-_\s]+/).map(s => s[0]?.toUpperCase() + s.slice(1)).join("");
 if (!/^[A-Z][A-Za-z0-9]*$/.test(objectName)) throw new Error("Invalid Dagger module name");
 if (!fs.existsSync("spago.yaml")) {
-  fs.writeFileSync("spago.yaml", `package:\n  name: dagger-module\n  dependencies:\n    - dagger-sdk\n    - effect\n    - prelude\nworkspace:\n  packageSet:\n    registry: 77.8.0\n`);
+  fs.writeFileSync("spago.yaml", `package:\n  name: dagger-module\n  dependencies:\n    - aff\n    - dagger-sdk\n    - effect\n    - prelude\nworkspace:\n  packageSet:\n    registry: 77.8.0\n`);
   fs.mkdirSync("src", {recursive:true});
   if (!fs.existsSync("src/Main.purs")) fs.writeFileSync("src/Main.purs", fs.readFileSync(path.join(sdk,"runtime/template/src/Main.purs"),"utf8").replaceAll("__MODULE_NAME__",objectName));
 }

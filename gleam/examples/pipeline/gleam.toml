@@ -1,0 +1,7 @@
+name = "dagger_pipeline_example"
+version = "0.1.0"
+target = "erlang"
+
+[dependencies]
+dagger = { path = "../.." }
+gleam_stdlib = ">= 1.0.0 and < 2.0.0"
