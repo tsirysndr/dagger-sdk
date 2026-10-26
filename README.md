@@ -1,7 +1,6 @@
 # Personal Dagger SDK experiments
 
-My experimental [Dagger](https://dagger.io) SDKs for **Gleam** and **PureScript**,
-by **Tsiry Sandratraina**.
+My experimental [Dagger](https://dagger.io) SDKs for **Gleam** and **PureScript**.
 
 **These are personal projects, not official Dagger SDKs. They are not maintained
 or endorsed by the Dagger team.** I'm exploring what an idiomatic, typed Dagger
@@ -103,9 +102,7 @@ reports, include the SDK, compiler/runtime and Dagger versions, and a small
 reproduction. Ideas for making either API feel more natural in its language are
 welcome.
 
-## Author and license
-
-Created by **Tsiry Sandratraina** — <tsiry.sndr@rocksky.app>.
+## License
 
 Original SDK code is [MIT licensed](LICENSE). Upstream Dagger schemas and
 schema-derived documentation retain their Apache-2.0 licensing. See the
