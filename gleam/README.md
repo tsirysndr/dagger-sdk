@@ -340,6 +340,20 @@ then regenerate and run the tests. See [NOTICE](NOTICE) for snapshot provenance.
 - User-defined module enums, interfaces, and unions are not implemented yet.
 - CLI provisioning, telemetry, and automatic retries are not implemented.
 
+## Examples and continuous integration
+
+Explore the [runnable examples](examples/README.md) for a container pipeline and
+a Dagger module with named, typed handlers. The examples target the root mise
+pin, **Dagger 1.0.0-beta.21**.
+
+GitHub Actions runs this SDK’s tests, checks generated bindings, and exercises
+the pipeline against a live engine. From the repository root, you can also run
+the module smoke test:
+
+```sh
+mise exec -- python3 scripts/test-module.py gleam
+```
+
 ## License
 
 The SDK implementation is [MIT licensed](LICENSE). The upstream schema and

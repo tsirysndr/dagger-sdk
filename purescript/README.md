@@ -416,6 +416,20 @@ This is an initial implementation, not an official Dagger SDK release.
 - Query execution is not memoized. Resolving object arguments or materializing
   object lists may require additional requests.
 
+## Examples and continuous integration
+
+Explore the [runnable examples](examples/README.md) for a container pipeline and
+a Dagger module with named, typed handlers. The examples target the root mise
+pin, **Dagger 1.0.0-beta.21**.
+
+GitHub Actions runs this SDK’s tests, checks generated bindings, and exercises
+the pipeline against a live engine. From the repository root, you can also run
+the module smoke test:
+
+```sh
+mise exec -- python3 scripts/test-module.py purescript
+```
+
 ## License
 
 Original SDK code is [MIT licensed](LICENSE). The upstream Dagger schema and API

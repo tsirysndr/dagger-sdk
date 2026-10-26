@@ -1,0 +1,114 @@
+name: SDK tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      modules:
+        description: Also build and invoke all custom SDK module examples
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sdk-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gleam:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: gleam
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: '28'
+          gleam-version: '1.19.2'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Formatting and unit tests
+        run: |
+          gleam format --check src test runtime/template examples
+          gleam test
+          python3 -m unittest discover -s codegen -p 'test_*.py'
+      - name: Check generated bindings
+        run: |
+          python3 codegen/generate.py codegen/schema.json
+          git diff --exit-code -- src/dagger
+      - name: Compile module example
+        working-directory: gleam/examples/module
+        run: gleam build
+      - name: Live pipeline example
+        working-directory: gleam/examples/pipeline
+        run: mise exec -- dagger api with-session -- gleam run
+
+  purescript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: purescript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - name: Unit tests and generated bindings
+        run: npm test
+      - name: Compile both examples
+        run: npx spago build --purs-args 'examples/*/src/**/*.purs'
+      - name: Live pipeline example
+        run: mise exec -- dagger api with-session -- node examples/pipeline/run.mjs
+
+  clojure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: clojure
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - name: Install pinned JDK and Clojure
+        run: |
+          mise trust
+          mise install
+      - name: Unit tests and generated bindings
+        run: |
+          mise exec -- clojure -M:test
+          mise exec -- clojure -M:generate --check
+      - name: Check module example
+        working-directory: clojure/examples/module
+        run: mise exec -- clojure -M -e "(require 'dagger-main)"
+      - name: Live client integration
+        run: mise exec -- clojure -M:integration
+      - name: Live pipeline example
+        working-directory: clojure/examples/pipeline
+        run: mise exec -- clojure -M:run
+
+  modules:
+    if: github.event_name == 'workflow_dispatch' && inputs.modules
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [gleam, purescript, clojure]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build and invoke module example
+        run: mise exec -- python3 scripts/test-module.py ${{ matrix.sdk }}
